@@ -54,7 +54,8 @@
 
     <div style="margin-bottom:16px">
       <label>검색 키워드</label>
-      <input type="text" id="keyword" placeholder="예: 인공지능 반도체">
+      <input type="text" id="keyword" placeholder="예: 포스코인터내셔널, 포스코인터">
+      <div class="hint">회사를 부르는 이름이 여러 개면 쉼표로 구분해 입력하세요. 이름마다 따로 검색해 하나의 결과로 합칩니다.</div>
     </div>
 
     <div class="row">
@@ -182,26 +183,84 @@
     return data;
   }
 
+  /** "포스코인터내셔널, 포스코인터" → ["포스코인터내셔널", "포스코인터"] (중복 제거) */
+  function parseKeywords(text) {
+    return [...new Set(String(text || '').split(/[,，]/).map(s => s.trim()).filter(Boolean))];
+  }
+
+  function titleKey(t) {
+    return String(t || '').replace(/\[[^\]]*\]|\([^)]*\)/g, '').replace(/[^\p{L}\p{N}]/gu, '').toLowerCase();
+  }
+
+  // 여러 키워드의 검색 결과 합치기: 같은 링크 또는 (말머리·문장부호 제외) 같은 제목이면 하나만 남김
+  function mergeArticles(lists) {
+    const seenLink = new Set(), seenTitle = new Set(), out = [];
+    for (const list of lists) {
+      for (const a of list) {
+        const link = a.originallink || a.link;
+        const tk = titleKey(a.title);
+        if ((link && seenLink.has(link)) || (tk && seenTitle.has(tk))) continue;
+        if (link) seenLink.add(link);
+        if (tk) seenTitle.add(tk);
+        out.push(a);
+      }
+    }
+    return out.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  }
+
+  // 검색한 이름들을 AI 내보내기의 회사명/다른 이름 칸에 반영 (이미 입력한 값은 유지)
+  function syncAiNames(keywords) {
+    if (!aiEl('aiCompany').value.trim()) aiEl('aiCompany').value = keywords[0];
+    const company = aiEl('aiCompany').value.trim();
+    const aliases = aiEl('aiAliases').value.split(',').map(s => s.trim()).filter(Boolean);
+    for (const k of keywords) if (k !== company && !aliases.includes(k)) aliases.push(k);
+    aiEl('aiAliases').value = aliases.join(', ');
+    try {
+      localStorage.setItem('ai_company', aiEl('aiCompany').value);
+      localStorage.setItem('ai_aliases', aiEl('aiAliases').value);
+    } catch (e) {}
+  }
+
   async function doSearch() {
     if (busy) return;
-    const keyword = document.getElementById('keyword').value.trim();
-    if (!keyword) { alert('검색 키워드를 입력하세요.'); return; }
+    const keywords = parseKeywords(document.getElementById('keyword').value);
+    if (!keywords.length) { alert('검색 키워드를 입력하세요.'); return; }
     const fetchBody = document.getElementById('fetchBody').checked;
-    if (!aiEl('aiCompany').value.trim()) aiEl('aiCompany').value = keyword;
+    syncAiNames(keywords);
     document.getElementById('warnBox').innerHTML = '';
 
     setBusy(true);
-    setStatus('<span class="spin" style="border-color:#6b7280;border-top-color:transparent"></span> 검색 중…');
     try {
-      const data = await callFunction({
-        action: 'search',
-        keyword,
-        start_date: document.getElementById('startDate').value,
-        end_date: document.getElementById('endDate').value,
-        max_count: parseInt(document.getElementById('maxCount').value) || 100,
-      });
-      ARTICLES = data.articles || [];
-      renderTable(data.warning);
+      const lists = [], warnings = [], errors = [];
+      for (let i = 0; i < keywords.length; i++) {
+        const kw = keywords[i];
+        setStatus('<span class="spin" style="border-color:#6b7280;border-top-color:transparent"></span> ' +
+          (keywords.length > 1 ? '"' + esc(kw) + '" 검색 중… (' + (i + 1) + '/' + keywords.length + ')' : '검색 중…'));
+        const prefix = keywords.length > 1 ? '[' + kw + '] ' : '';
+        try {
+          const data = await callFunction({
+            action: 'search',
+            keyword: kw,
+            start_date: document.getElementById('startDate').value,
+            end_date: document.getElementById('endDate').value,
+            max_count: parseInt(document.getElementById('maxCount').value) || 100,
+          });
+          lists.push(data.articles || []);
+          if (data.warning) warnings.push(prefix + data.warning);
+        } catch (e) {
+          errors.push(prefix + e.message);
+        }
+      }
+      if (errors.length === keywords.length) throw new Error(errors.join('\n'));
+      errors.forEach(msg => warnings.push('검색 실패 ' + msg));
+
+      ARTICLES = mergeArticles(lists);
+      renderTable();
+      warnings.forEach(addWarning);
+      if (keywords.length > 1) {
+        const total = lists.reduce((n, l) => n + l.length, 0);
+        if (total > ARTICLES.length) addWarning('키워드 ' + keywords.length + '개 검색 결과 ' + total + '건 중 중복 ' + (total - ARTICLES.length) + '건을 합쳤습니다.');
+      }
       setStatus('총 ' + ARTICLES.length + '건');
       if (!ARTICLES.length) { alert('해당 기간에 검색된 기사가 없습니다.'); return; }
       if (fetchBody) await fetchBodies();
@@ -319,7 +378,7 @@
   }));
 
   function aiOptions() {
-    const company = aiEl('aiCompany').value.trim() || document.getElementById('keyword').value.trim();
+    const company = aiEl('aiCompany').value.trim() || parseKeywords(document.getElementById('keyword').value)[0] || '';
     return {
       company,
       aliases: aiEl('aiAliases').value.split(',').map(s => s.trim()).filter(Boolean),
