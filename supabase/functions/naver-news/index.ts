@@ -167,34 +167,46 @@ async function callNaver(params: URLSearchParams) {
   }
   throw new HttpError(502, `네이버 API 요청 실패: ${detail}`);
 }
-
-async function searchNews(keyword: string, startDate: string, endDate: string, maxCount: number) {
-  const collected: Article[] = [];
-  let reachedOlderThanRange = false;
-  let hitApiLimit = false;
+/**
+ * 한 가지 정렬로 최대 1,000건을 훑어 기간 안의 기사만 모은다.
+ *   date(최신순): 시작일보다 오래된 기사가 나오면 이후도 전부 과거라 바로 멈춘다.
+ *   sim(정확도순): 날짜 순서가 섞여 있어 끝까지 훑으며 기간 밖 기사만 거른다.
+ */
+async function fetchSorted(
+  keyword: string,
+  sort: "date" | "sim",
+  startDate: string,
+  endDate: string,
+  limit: number,
+) {
+  const articles: Article[] = [];
+  let reachedStart = false; // 최신순이 시작일까지 닿았는지
+  let exhausted = false; // 검색 결과를 끝까지 다 봤는지
+  let oldestSeen = ""; // 훑은 기사 중 가장 오래된 날짜 (최신순에서 어디까지 닿았는지)
 
   for (let start = 1; start <= API_MAX_START; start += API_DISPLAY) {
     const data = await callNaver(
-      new URLSearchParams({
-        query: keyword,
-        display: String(API_DISPLAY),
-        start: String(start),
-        sort: "date", // 최신순 (기간 필터를 위해 필수)
-      }),
+      new URLSearchParams({ query: keyword, display: String(API_DISPLAY), start: String(start), sort }),
     );
     const items = data.items ?? [];
-    if (!items.length) break;
+    if (!items.length) {
+      exhausted = true;
+      break;
+    }
 
     for (const it of items) {
       const pub = parsePubDate(it.pubDate ?? "");
       if (!pub) continue;
-      // 최신순이므로 시작일보다 과거면 이후 항목도 전부 과거 → 종료
+      if (!oldestSeen || pub.day < oldestSeen) oldestSeen = pub.day;
       if (pub.day < startDate) {
-        reachedOlderThanRange = true;
-        break;
+        if (sort === "date") {
+          reachedStart = true;
+          break;
+        }
+        continue;
       }
-      if (pub.day > endDate) continue; // 종료일보다 최신이면 건너뜀
-      collected.push({
+      if (pub.day > endDate) continue;
+      articles.push({
         title: cleanHtml(it.title),
         date: pub.label,
         source: domainOf(it.originallink || it.link || ""),
@@ -202,20 +214,58 @@ async function searchNews(keyword: string, startDate: string, endDate: string, m
         link: it.link || it.originallink || "",
         originallink: it.originallink || "",
       });
-      if (collected.length >= maxCount) break;
+      if (articles.length >= limit) break;
     }
 
-    if (reachedOlderThanRange || collected.length >= maxCount) break;
-    if (items.length < API_DISPLAY) break; // 마지막 페이지
-    if (start + API_DISPLAY > API_MAX_START) hitApiLimit = true;
+    if (reachedStart || articles.length >= limit) break;
+    if (items.length < API_DISPLAY) {
+      exhausted = true;
+      break;
+    }
   }
-
-  const warning = hitApiLimit && !reachedOlderThanRange
-    ? "네이버 API 한도(최신 1,000건)에 도달했습니다. 지정한 기간의 더 오래된 기사는 조회되지 않을 수 있습니다."
-    : null;
-  return { articles: collected, warning };
+  return { articles, reachedStart, exhausted, oldestSeen };
 }
 
+/** 시간순으로 정렬된 목록에서 n건을 고르게 뽑는다 (특정 기간에 몰리지 않도록). */
+function sampleEvenly<T>(sorted: T[], n: number): T[] {
+  if (sorted.length <= n) return sorted;
+  const step = sorted.length / n;
+  return Array.from({ length: n }, (_, i) => sorted[Math.floor(i * step)]);
+}
+
+/**
+ * 네이버 API 는 검색어당 1,000건까지만 주고 기간 지정이 없어서, 최신순만으로는 최근 기사에서 끝난다.
+ * 최신순 + 정확도순을 함께 가져와 합치면 정확도순이 더 오래된 기사를 채워 준다.
+ */
+async function searchNews(keyword: string, startDate: string, endDate: string, maxCount: number) {
+  const [byDate, bySim] = await Promise.all([
+    fetchSorted(keyword, "date", startDate, endDate, maxCount),
+    fetchSorted(keyword, "sim", startDate, endDate, maxCount),
+  ]);
+
+  const merged = new Map<string, Article>();
+  for (const a of [...byDate.articles, ...bySim.articles]) {
+    const key = a.originallink || a.link;
+    if (!merged.has(key)) merged.set(key, a);
+  }
+  const all = [...merged.values()].sort((a, b) => b.date.localeCompare(a.date));
+  const articles = sampleEvenly(all, maxCount);
+
+  const warnings: string[] = [];
+  const dateHitLimit = !byDate.reachedStart && !byDate.exhausted && byDate.articles.length < maxCount;
+  if (dateHitLimit) {
+    warnings.push(
+      `최신순 검색은 네이버 API 한도(최신 1,000건)로 ${byDate.oldestSeen}까지만 닿았습니다. ` +
+        "그 이전 기간은 정확도순 검색 결과(관련도 높은 기사 위주)로만 채워져 빠진 기사가 있을 수 있습니다.",
+    );
+  }
+  if (all.length > articles.length) {
+    warnings.push(
+      `기간 내 기사 ${all.length}건 중 최대 수집 건수(${maxCount}건)에 맞춰 기간 전체에서 고르게 ${articles.length}건을 추렸습니다.`,
+    );
+  }
+  return { articles, warning: warnings.length ? warnings.join(" ") : null };
+}
 // --------------------------------------------------------------------------- //
 // 본문 / 출처 추출 (기사 링크에 실제 접속)
 // --------------------------------------------------------------------------- //
