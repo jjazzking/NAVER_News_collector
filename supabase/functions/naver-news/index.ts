@@ -2,6 +2,7 @@
 //
 // GitHub Pages 화면(docs/)이 호출하는 백엔드.
 // 네이버 API 키는 Supabase secrets(NAVER_CLIENT_ID / NAVER_CLIENT_SECRET)에만 저장되어 화면에 노출되지 않는다.
+// 기본은 NAVER API HUB 키. 개발자센터 키를 쓰면 NAVER_API_PROVIDER=developers 도 설정한다.
 //
 //   POST { action: "search", keyword, start_date, end_date, max_count }
 //     → { count, articles: [{ title, date, source, body, link, originallink }], warning }
@@ -11,7 +12,25 @@
 // 본문 수집은 요청 1회의 실행 시간 제한 때문에 화면에서 여러 번 나눠 호출한다.
 import { parseHTML } from "npm:linkedom@0.18.5";
 
-const NAVER_NEWS_API = "https://openapi.naver.com/v1/search/news.json";
+// 네이버 검색 API 는 발급처가 두 곳이다. NAVER_API_PROVIDER 로 선택 (기본: hub)
+//   hub        : NAVER Cloud 콘솔의 NAVER API HUB
+//   developers : 네이버 개발자센터(developers.naver.com)
+const NAVER_API_PROVIDERS = {
+  hub: {
+    url: "https://naverapihub.apigw.ntruss.com/search/v1/news",
+    idHeader: "X-NCP-APIGW-API-KEY-ID",
+    secretHeader: "X-NCP-APIGW-API-KEY",
+    permissionHint: 'NAVER API HUB 의 Application 에 "뉴스" API 가 선택되어 있는지 확인하세요.',
+  },
+  developers: {
+    url: "https://openapi.naver.com/v1/search/news.json",
+    idHeader: "X-Naver-Client-Id",
+    secretHeader: "X-Naver-Client-Secret",
+    permissionHint: '개발자센터 애플리케이션에 "검색" API 를 추가하세요.',
+  },
+};
+const PROVIDER_NAME = Deno.env.get("NAVER_API_PROVIDER") === "developers" ? "developers" : "hub";
+const NAVER_API = NAVER_API_PROVIDERS[PROVIDER_NAME];
 const API_MAX_START = 1000; // 네이버 API는 start <= 1000 까지만 허용
 const API_DISPLAY = 100; // 한 페이지 최대 100건
 const BODY_BATCH_MAX = 20;
@@ -116,18 +135,26 @@ async function callNaver(params: URLSearchParams) {
       "서버에 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 이 설정되지 않았습니다. (supabase secrets set)",
     );
   }
-  const resp = await fetch(`${NAVER_NEWS_API}?${params}`, {
-    headers: { "X-Naver-Client-Id": id, "X-Naver-Client-Secret": secret },
+  const resp = await fetch(`${NAVER_API.url}?${params}`, {
+    headers: { [NAVER_API.idHeader]: id, [NAVER_API.secretHeader]: secret },
   });
   if (resp.ok) return await resp.json();
 
-  const err = await resp.json().catch(() => ({}));
-  const detail = `${resp.status} ${err.errorCode ?? ""} ${err.errorMessage ?? ""}`.trim();
+  // 에러 형식: 검색 API { errorCode, errorMessage } / API 게이트웨이 { error: { errorCode, message, details } }
+  const body = await resp.json().catch(() => ({}));
+  const err = body.error ?? body;
+  const detail = [resp.status, err.errorCode ?? err.code, err.errorMessage ?? err.message, err.details]
+    .filter(Boolean).join(" ");
   if (resp.status === 401) {
-    throw new HttpError(401, `네이버 인증 실패: Client ID / Secret 을 확인하세요. (${detail})`);
+    const other = PROVIDER_NAME === "hub" ? "developers" : "hub";
+    throw new HttpError(
+      401,
+      `네이버 인증 실패: Client ID / Secret 을 확인하세요. ` +
+        `키 발급처가 다르면 NAVER_API_PROVIDER=${other} 로 설정하세요. (현재: ${PROVIDER_NAME}, ${detail})`,
+    );
   }
   if (resp.status === 403) {
-    throw new HttpError(403, `네이버 API 권한 없음: 개발자센터 애플리케이션에 "검색" API 를 추가하세요. (${detail})`);
+    throw new HttpError(403, `네이버 API 권한 없음: ${NAVER_API.permissionHint} (${detail})`);
   }
   if (resp.status === 429) {
     throw new HttpError(429, `네이버 API 일일 호출 한도를 초과했습니다. (${detail})`);
