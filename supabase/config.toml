@@ -1,0 +1,6 @@
+# Supabase CLI 설정 (필요한 부분만)
+project_id = "naver-news-collector"
+
+[functions.naver-news]
+# 로그인 없이 GitHub Pages 화면에서 바로 호출할 수 있도록 JWT 검사를 끈다.
+verify_jwt = false
