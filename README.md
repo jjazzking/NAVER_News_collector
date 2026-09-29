@@ -72,9 +72,10 @@ npx supabase login
 npx supabase link --project-ref <project-ref>
 
 # 네이버 API 키 등록 (서버에만 저장됨)
-npx supabase secrets set NAVER_CLIENT_ID=발급받은ID NAVER_CLIENT_SECRET=발급받은Secret
+# secrets 는 프로젝트 전체가 공유하므로 다른 함수와 겹치지 않도록 NEWS_COLLECTOR_ 접두사를 씁니다.
+npx supabase secrets set NEWS_COLLECTOR_NAVER_CLIENT_ID=발급받은ID NEWS_COLLECTOR_NAVER_CLIENT_SECRET=발급받은Secret
 # 개발자센터(developers.naver.com) 키라면 이것도 추가 (NAVER API HUB 키면 생략)
-# npx supabase secrets set NAVER_API_PROVIDER=developers
+# npx supabase secrets set NEWS_COLLECTOR_NAVER_API_PROVIDER=developers
 
 # 배포 (로그인 없이 호출할 수 있도록 JWT 검사 해제)
 npx supabase functions deploy naver-news --no-verify-jwt
@@ -85,8 +86,8 @@ npx supabase functions deploy naver-news --no-verify-jwt
 1. 대시보드 → **Edge Functions** → **Deploy a new function** → **Via Editor**
 2. 함수 이름 `naver-news`, 코드 칸에 `supabase/functions/naver-news/index.ts` 내용을 전부 붙여넣고 Deploy
 3. 함수 상세 화면 → **Details** 에서 **JWT 검사(Verify JWT)** 를 **끄고** 저장
-4. **Edge Functions → Secrets** 에서 `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` 추가
-   (개발자센터 키라면 `NAVER_API_PROVIDER` = `developers` 도 추가)
+4. **Edge Functions → Secrets** 에서 `NEWS_COLLECTOR_NAVER_CLIENT_ID`, `NEWS_COLLECTOR_NAVER_CLIENT_SECRET` 추가
+   (개발자센터 키라면 `NEWS_COLLECTOR_NAVER_API_PROVIDER` = `developers` 도 추가)
 
 ### 배포 확인
 
@@ -100,8 +101,8 @@ curl -X POST https://<project-ref>.supabase.co/functions/v1/naver-news \
 
 | 에러 | 해결 |
 |---|---|
-| `NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 이 설정되지 않았습니다` | secrets 등록 후 다시 시도 |
-| `네이버 인증 실패` (401) | Client ID / Secret 오타 확인. 키 발급처(API HUB / 개발자센터)와 `NAVER_API_PROVIDER` 설정이 맞는지 확인 |
+| `NEWS_COLLECTOR_NAVER_CLIENT_ID / NEWS_COLLECTOR_NAVER_CLIENT_SECRET 이 설정되지 않았습니다` | secrets 등록 후 다시 시도 |
+| `네이버 인증 실패` (401) | Client ID / Secret 오타 확인. 키 발급처(API HUB / 개발자센터)와 `NEWS_COLLECTOR_NAVER_API_PROVIDER` 설정이 맞는지 확인 |
 | `네이버 API 권한 없음` (403) | API HUB: Application 에 "뉴스" API 선택 / 개발자센터: 애플리케이션에 "검색" API 추가 |
 | `Invalid JWT` / `Missing authorization header` | JWT 검사 해제(`--no-verify-jwt`) 후 재배포 |
 
@@ -120,7 +121,7 @@ curl -X POST https://<project-ref>.supabase.co/functions/v1/naver-news \
 아래처럼 설정하면 내 GitHub Pages 에서 온 브라우저 요청만 허용합니다.
 
 ```bash
-npx supabase secrets set ALLOWED_ORIGINS=https://<GitHub 아이디>.github.io
+npx supabase secrets set NEWS_COLLECTOR_ALLOWED_ORIGINS=https://<GitHub 아이디>.github.io
 ```
 
 > 브라우저 기준의 제한이라 curl 등으로 직접 호출하는 것까지 막지는 못합니다.
