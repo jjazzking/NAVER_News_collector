@@ -112,7 +112,9 @@ curl -X POST https://<project-ref>.supabase.co/functions/v1/naver-news \
    ```js
    window.NAVER_NEWS_FUNCTION_URL = "https://abcdefghijkl.supabase.co/functions/v1/naver-news";
    ```
-2. GitHub 레포 → **Settings → Pages** → Source: **Deploy from a branch** → Branch: `main`, 폴더: `/docs` → Save
+2. GitHub 레포 → **Settings → Pages** → Source: **GitHub Actions** 선택
+   - `main` 에 `docs/` 변경이 푸시될 때마다 `.github/workflows/pages.yml` 이 자동 배포합니다.
+   - 수동 배포: **Actions → Deploy GitHub Pages → Run workflow**
 3. 1~2분 뒤 `https://<GitHub 아이디>.github.io/NAVER_News_collector/` 접속
 
 ## 4. (선택) 다른 사이트에서의 호출 막기
