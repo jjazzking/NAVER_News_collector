@@ -345,7 +345,7 @@
       (stats.merged ? ' (중복 ' + stats.merged + '건 합침)' : '') +
       ' · 약 <b>' + stats.totalChars.toLocaleString() + '자</b>' +
       ' · 파일 <b>' + stats.parts + '개</b>' +
-      (stats.notMentioned ? '<br>회사명이 나오지 않는 기사 ' + stats.notMentioned + '건 (AI가 "기타"로 분류)' : '') +
+      (stats.notMentioned ? '<br>회사명이 나오지 않는 기사 ' + stats.notMentioned + '건 (AI가 분석에서 제외)' : '') +
       (noBody ? '<br>본문 없이 API 요약만 있는 기사 ' + noBody + '건' : '');
   }
 
