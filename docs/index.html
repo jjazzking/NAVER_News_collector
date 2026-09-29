@@ -39,6 +39,10 @@
           border-radius:50%; animation:sp .8s linear infinite; vertical-align:middle; }
   @keyframes sp { to { transform:rotate(360deg); } }
   .count { font-size:14px; color:var(--muted); }
+  select { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; background:#fff; }
+  h3 { margin:0 0 4px; font-size:16px; }
+  .stats { font-size:13px; color:#374151; background:#f9fafb; border:1px solid var(--line); border-radius:8px;
+           padding:10px 12px; margin-top:14px; }
 </style>
 </head>
 <body>
@@ -92,10 +96,51 @@
     </div>
   </div>
 
+  <div class="card" id="aiCard" style="display:none">
+    <h3>🤖 AI 분석용 내보내기</h3>
+    <div class="hint" style="margin:0 0 16px">
+      검색 결과를 AI(Copilot 등)가 읽기 좋은 JSON 으로 정리하고, 이슈별 분류·요약을 시키는 지시문을 함께 만듭니다.
+      JSON 파일을 첨부하고 지시문을 붙여넣으면 됩니다.
+    </div>
+    <div class="row">
+      <div>
+        <label>회사명</label>
+        <input type="text" id="aiCompany" placeholder="예: OO전자">
+      </div>
+      <div>
+        <label>다른 이름 (쉼표로 구분)</label>
+        <input type="text" id="aiAliases" placeholder="예: OO, OO Electronics">
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <div>
+        <label>기사 발췌 길이</label>
+        <select id="aiLevel">
+          <option value="short">짧게 — 기사당 약 300자</option>
+          <option value="normal" selected>보통 — 기사당 약 600자 (권장)</option>
+          <option value="full">본문 전체</option>
+        </select>
+      </div>
+      <div>
+        <label>파일당 최대 글자 수 (넘으면 여러 파일로 나눔)</label>
+        <input type="number" id="aiMaxChars" value="60000" min="5000" step="5000">
+      </div>
+    </div>
+    <div class="hint">발췌 = 기사 앞부분 2~3문장 + 회사명이 나오는 문장. 기자 이름·저작권 문구 등은 제거되고, 제목이 거의 같은 기사는 하나로 합쳐집니다.</div>
+    <div class="stats" id="aiStats"></div>
+    <div class="actions">
+      <button id="aiJsonBtn" onclick="exportAiJson()">JSON 내보내기</button>
+      <button class="ghost" onclick="copyAiPrompt()">지시문 복사</button>
+      <button class="ghost" onclick="downloadAiPrompt()">지시문 다운로드</button>
+      <span class="count" id="aiMsg"></span>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="config.js"></script>
+<script src="ai-export.js"></script>
 <script>
   const FUNCTION_URL = window.NAVER_NEWS_FUNCTION_URL || '';
   const BODY_BATCH = 20;     // Edge Function 1회 호출당 본문 수집 건수 (서버 최대 20)
@@ -123,6 +168,8 @@
     document.getElementById('searchBtn').disabled = b;
     document.getElementById('csvBtn').disabled = b || !ARTICLES.length;
     document.getElementById('xlsxBtn').disabled = b || !ARTICLES.length;
+    document.getElementById('aiJsonBtn').disabled = b || !ARTICLES.length;
+    if (!b && ARTICLES.length) updateAiStats();
   }
 
   async function callFunction(payload) {
@@ -140,6 +187,7 @@
     const keyword = document.getElementById('keyword').value.trim();
     if (!keyword) { alert('검색 키워드를 입력하세요.'); return; }
     const fetchBody = document.getElementById('fetchBody').checked;
+    if (!aiEl('aiCompany').value.trim()) aiEl('aiCompany').value = keyword;
     document.getElementById('warnBox').innerHTML = '';
 
     setBusy(true);
@@ -180,7 +228,7 @@
         try {
           const data = await callFunction({ action: 'bodies', urls: batch.map(a => a.link || a.originallink) });
           (data.results || []).forEach((r, i) => {
-            if (r.body) batch[i].body = r.body;
+            if (r.body) { batch[i].body = r.body; batch[i].full = true; }
             if (r.source) batch[i].source = r.source;
           });
         } catch (e) {
@@ -216,6 +264,8 @@
       tbody.appendChild(tr);
     });
     document.getElementById('resultCard').style.display = ARTICLES.length ? '' : 'none';
+    document.getElementById('aiCard').style.display = ARTICLES.length ? '' : 'none';
+    if (ARTICLES.length) updateAiStats();
   }
 
   function download(fmt) {
@@ -248,6 +298,105 @@
     const a = document.createElement('a');
     a.href = url; a.download = name; a.click();
     URL.revokeObjectURL(url);
+  }
+
+  // ------------------------------------------------------------------------- //
+  // AI 분석용 내보내기
+  // ------------------------------------------------------------------------- //
+  const aiEl = id => document.getElementById(id);
+
+  // 회사명/다른 이름은 브라우저에 기억 (저장 실패해도 동작에는 영향 없음)
+  try {
+    aiEl('aiCompany').value = localStorage.getItem('ai_company') || '';
+    aiEl('aiAliases').value = localStorage.getItem('ai_aliases') || '';
+  } catch (e) {}
+  ['aiCompany', 'aiAliases', 'aiLevel', 'aiMaxChars'].forEach(id => aiEl(id).addEventListener('input', () => {
+    try {
+      localStorage.setItem('ai_company', aiEl('aiCompany').value);
+      localStorage.setItem('ai_aliases', aiEl('aiAliases').value);
+    } catch (e) {}
+    updateAiStats();
+  }));
+
+  function aiOptions() {
+    const company = aiEl('aiCompany').value.trim() || document.getElementById('keyword').value.trim();
+    return {
+      company,
+      aliases: aiEl('aiAliases').value.split(',').map(s => s.trim()).filter(Boolean),
+      keyword: document.getElementById('keyword').value.trim(),
+      startDate: document.getElementById('startDate').value,
+      endDate: document.getElementById('endDate').value,
+      level: aiEl('aiLevel').value,
+      maxChars: parseInt(aiEl('aiMaxChars').value) || 60000,
+    };
+  }
+
+  function aiBuild() {
+    const opts = aiOptions();
+    return { opts, ...AIExport.buildExport(ARTICLES, opts) };
+  }
+
+  function updateAiStats() {
+    if (!ARTICLES.length || busy) { aiEl('aiStats').textContent = busy ? '수집이 끝나면 계산됩니다.' : ''; return; }
+    const { stats } = aiBuild();
+    const noBody = ARTICLES.filter(a => !a.full).length;
+    aiEl('aiStats').innerHTML =
+      '내보낼 기사 <b>' + stats.exported + '건</b>' +
+      (stats.merged ? ' (중복 ' + stats.merged + '건 합침)' : '') +
+      ' · 약 <b>' + stats.totalChars.toLocaleString() + '자</b>' +
+      ' · 파일 <b>' + stats.parts + '개</b>' +
+      (stats.notMentioned ? '<br>회사명이 나오지 않는 기사 ' + stats.notMentioned + '건 (AI가 "기타"로 분류)' : '') +
+      (noBody ? '<br>본문 없이 API 요약만 있는 기사 ' + noBody + '건' : '');
+  }
+
+  function aiFileBase(opts) {
+    const safe = (opts.company || 'news').replace(/[^\w가-힣]+/g, '_').slice(0, 30);
+    const now = new Date();
+    return safe + '_' + ymd(now).replace(/-/g, '') + '_' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
+  }
+
+  function saveBlob(text, name, type) {
+    const url = URL.createObjectURL(new Blob([text], { type }));
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function exportAiJson() {
+    if (!ARTICLES.length || busy) return;
+    const { opts, files } = aiBuild();
+    if (!opts.company) { alert('회사명을 입력하세요.'); return; }
+    const base = aiFileBase(opts);
+    for (const f of files) {
+      const suffix = files.length > 1 ? '_part' + f.part.index + 'of' + f.part.total : '';
+      saveBlob(JSON.stringify(f, null, 2), 'ai_input_' + base + suffix + '.json', 'application/json');
+      if (files.length > 1) await new Promise(r => setTimeout(r, 400));  // 연속 다운로드 차단 방지
+    }
+    aiEl('aiMsg').textContent = files.length > 1
+      ? 'JSON ' + files.length + '개 저장됨 — 지시문과 함께 1번 파일부터 순서대로 보내세요.'
+      : 'JSON 저장됨 — 지시문과 함께 AI에 첨부하세요.';
+  }
+
+  function aiPromptText() {
+    const { opts, files } = aiBuild();
+    return AIExport.buildPrompt(opts, files.length);
+  }
+
+  async function copyAiPrompt() {
+    if (!ARTICLES.length) return;
+    const text = aiPromptText();
+    try {
+      await navigator.clipboard.writeText(text);
+      aiEl('aiMsg').textContent = '지시문이 복사되었습니다.';
+    } catch (e) {
+      downloadAiPrompt();
+    }
+  }
+
+  function downloadAiPrompt() {
+    if (!ARTICLES.length) return;
+    saveBlob(aiPromptText(), 'ai_prompt_' + aiFileBase(aiOptions()) + '.txt', 'text/plain;charset=utf-8');
+    aiEl('aiMsg').textContent = '지시문(txt)이 저장되었습니다.';
   }
 </script>
 </body>
