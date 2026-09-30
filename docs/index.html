@@ -7,6 +7,7 @@
 <style>
   :root { --brand:#03c75a; --bg:#f5f6f8; --line:#e3e5e8; --muted:#6b7280; }
   * { box-sizing: border-box; }
+  [hidden] { display:none !important; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","맑은 고딕",sans-serif;
          background:var(--bg); color:#1f2328; }
   header { background:var(--brand); color:#fff; padding:18px 24px; font-size:20px; font-weight:700; }
@@ -43,14 +44,55 @@
   h3 { margin:0 0 4px; font-size:16px; }
   .stats { font-size:13px; color:#374151; background:#f9fafb; border:1px solid var(--line); border-radius:8px;
            padding:10px 12px; margin-top:14px; }
+  /* 배포용(corp) 모드: 탭 / 키 입력 / 이용 안내 */
+  .tabs { background:#fff; border-bottom:1px solid var(--line); padding:0 24px; display:flex; gap:4px; }
+  .tabs button { background:none; color:var(--muted); border:0; border-bottom:3px solid transparent; border-radius:0;
+                 padding:14px 16px; font-size:15px; }
+  .tabs button.active { color:#1f2328; border-bottom-color:var(--brand); }
+  .keyok { color:#047857; font-weight:600; }
+  .guide h2 { font-size:18px; margin:0 0 12px; }
+  .guide h4 { font-size:15px; margin:18px 0 6px; }
+  .guide p, .guide li { font-size:14px; line-height:1.7; color:#374151; }
+  .guide ol, .guide ul { padding-left:20px; margin:6px 0; }
+  .guide code { background:#f3f4f6; padding:1px 5px; border-radius:4px; font-size:13px; }
+  .guide table { margin-top:8px; }
+  .shot { margin:10px 0 4px; }
+  .shot img { max-width:100%; border:1px solid var(--line); border-radius:8px; display:block; }
+  .shot .ph { border:2px dashed #cbd5e1; border-radius:8px; background:#f8fafc; color:#64748b; font-size:13px;
+              padding:28px 16px; text-align:center; }
+  .shot figcaption { font-size:12px; color:var(--muted); margin-top:6px; }
+  .note { background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; padding:12px; border-radius:8px; font-size:13px; line-height:1.6; }
 </style>
 </head>
 <body>
 <header>📰 네이버 뉴스 검색 정리 툴</header>
-<div class="wrap">
+<nav class="tabs" id="tabs" hidden>
+  <button type="button" data-tab="search" class="active">검색</button>
+  <button type="button" data-tab="guide">이용 안내</button>
+</nav>
+<div class="wrap" id="tabSearch">
 
   <div class="card">
     <div id="configWarn"></div>
+
+    <div class="cred" id="keyBox" hidden>
+      <label style="margin-bottom:10px">🔑 NAVER API HUB 인증 정보 <span id="keyState" class="hint"></span></label>
+      <div class="row">
+        <div>
+          <label>Client ID</label>
+          <input type="text" id="clientId" autocomplete="off" spellcheck="false">
+        </div>
+        <div>
+          <label>Client Secret</label>
+          <input type="password" id="clientSecret" autocomplete="off">
+        </div>
+      </div>
+      <label class="chk" style="margin-top:10px">
+        <input type="checkbox" id="rememberKey" checked> 이 브라우저에 저장 (공용 PC라면 해제)
+      </label>
+      <div class="hint">키 발급 방법은 <a href="#guide" onclick="showTab('guide');return false;">이용 안내</a> 탭을 참고하세요.
+        키는 검색할 때 네이버 호출에만 쓰이고, 서버에 저장되지 않습니다.</div>
+    </div>
 
     <div style="margin-bottom:16px">
       <label>검색 키워드</label>
@@ -139,11 +181,102 @@
 
 </div>
 
+<div class="wrap guide" id="tabGuide" hidden>
+
+  <div class="card">
+    <h2>이 도구로 할 수 있는 것</h2>
+    <ol>
+      <li>회사명으로 네이버 뉴스를 기간을 정해 모으고, 표로 보거나 <b>CSV / 엑셀</b>로 내려받습니다.</li>
+      <li>모은 기사를 <b>AI(Copilot)</b>에 넘겨 <b>이슈별 일자·요약·대표 기사 링크</b>를 표와 엑셀로 받습니다.</li>
+    </ol>
+    <div class="note">처음 한 번은 본인의 <b>NAVER API HUB</b> 키(Client ID / Client Secret)를 발급받아야 합니다. 아래 1번부터 따라 하세요.</div>
+  </div>
+
+  <div class="card">
+    <h2>1. NAVER API HUB 키 발급 (처음 한 번)</h2>
+
+    <h4>① NAVER Cloud 콘솔 로그인</h4>
+    <p>NAVER Cloud 콘솔에 로그인합니다.</p>
+    <figure class="shot" data-src="guide/01-console.png"><figcaption>NAVER Cloud 콘솔 첫 화면</figcaption></figure>
+
+    <h4>② NAVER API HUB 에서 Application 등록</h4>
+    <p><b>Application Services → NAVER API HUB → Application</b> 으로 이동해 새 Application 을 등록합니다. 이름은 자유롭게 정하면 됩니다 (예: <code>NewsCollector</code>).</p>
+    <figure class="shot" data-src="guide/02-application.png"><figcaption>Application 등록 화면</figcaption></figure>
+
+    <h4>③ "뉴스" API 선택 후 저장</h4>
+    <p>API 목록에서 <b>뉴스</b> (<code>NAVER_SCH_NEWS</code>) 를 체크하고 <b>저장</b>합니다. 체크만 하고 저장하지 않으면 검색 시 "권한 없음" 오류가 납니다.</p>
+    <figure class="shot" data-src="guide/03-select-news.png"><figcaption>API 목록에서 "뉴스" 체크 → 저장</figcaption></figure>
+
+    <h4>④ (필요한 경우) Subscription 확인</h4>
+    <p>저장했는데도 "권한 없음" 오류가 나면, 왼쪽 <b>Subscription</b> 메뉴에서 검색 API 가 구독되어 있는지 확인하세요.</p>
+    <figure class="shot" data-src="guide/04-subscription.png"><figcaption>Subscription 메뉴</figcaption></figure>
+
+    <h4>⑤ Client ID / Client Secret 복사</h4>
+    <p>등록한 Application 의 인증 정보에서 <b>Client ID</b> 와 <b>Client Secret</b> 을 복사해 둡니다.</p>
+    <figure class="shot" data-src="guide/05-credentials.png"><figcaption>Application 인증 정보</figcaption></figure>
+  </div>
+
+  <div class="card">
+    <h2>2. 키 입력</h2>
+    <p><a href="#search" onclick="showTab('search');return false;">검색</a> 탭 맨 위 <b>🔑 NAVER API HUB 인증 정보</b> 칸에 복사한 Client ID / Client Secret 을 붙여넣습니다.</p>
+    <ul>
+      <li><b>이 브라우저에 저장</b>을 켜 두면 다음부터 다시 입력하지 않아도 됩니다. 공용 PC라면 끄세요.</li>
+      <li>키는 검색할 때 네이버 호출에만 쓰이고, 서버에 저장되지 않습니다.</li>
+    </ul>
+    <figure class="shot" data-src="guide/06-enter-key.png"><figcaption>키 입력 칸</figcaption></figure>
+  </div>
+
+  <div class="card">
+    <h2>3. 검색하고 내려받기</h2>
+    <ol>
+      <li><b>검색 키워드</b>: 회사명을 입력합니다. 기사마다 부르는 이름이 다르면 쉼표로 여러 개 입력하세요 (예: <code>포스코인터내셔널, 포스코인터</code>). 이름마다 따로 검색해 중복을 합친 하나의 결과로 보여줍니다.</li>
+      <li><b>시작일 / 종료일</b>: 모을 기간을 정합니다.</li>
+      <li><b>최대 수집 건수</b>: 이름 하나당 최대 몇 건을 모을지 정합니다 (최대 1,000).</li>
+      <li><b>기사 본문 전체 수집</b>: 켜면 기사 링크에 접속해 본문까지 가져옵니다(느림). 끄면 네이버가 주는 짧은 요약만 씁니다(빠름).</li>
+      <li><b>검색</b> → 표에서 확인 → <b>CSV 다운로드</b> / <b>Excel 다운로드</b></li>
+    </ol>
+    <figure class="shot" data-src="guide/07-search.png"><figcaption>검색 결과 화면</figcaption></figure>
+    <div class="note">네이버 API 는 검색어 하나당 1,000건까지만 주고 기간 지정 기능이 없습니다. 기사가 많은 회사를 긴 기간으로 검색하면
+      "최신순 검색은 ○○까지만 닿았습니다" 경고가 뜨고, 그 이전 기간은 관련도 높은 기사 위주로만 채워집니다.</div>
+  </div>
+
+  <div class="card">
+    <h2>4. AI(Copilot)로 이슈 정리하기</h2>
+    <ol>
+      <li>검색 결과 아래 <b>🤖 AI 분석용 내보내기</b> 에서 <b>회사명</b>과 <b>다른 이름</b>을 확인합니다. (검색 키워드가 자동으로 들어갑니다)</li>
+      <li><b>JSON 내보내기</b> 를 눌러 파일을 저장합니다.</li>
+      <li><b>지시문 복사</b> 를 누릅니다.</li>
+      <li>Copilot 에서 <b>새 대화</b>를 열고, 저장한 JSON 파일을 첨부한 뒤 지시문을 붙여넣어 보냅니다.</li>
+      <li>이슈별 <b>일자 · 이슈 · 요약 · 대표 기사 링크</b>가 표와 엑셀 파일로 나옵니다. (엑셀을 못 만드는 환경이면 CSV 로 나옵니다)</li>
+    </ol>
+    <figure class="shot" data-src="guide/08-ai-export.png"><figcaption>AI 분석용 내보내기</figcaption></figure>
+    <figure class="shot" data-src="guide/09-copilot.png"><figcaption>Copilot 에 JSON 첨부 + 지시문 붙여넣기</figcaption></figure>
+    <div class="note">JSON 이 여러 개로 나뉘어 저장되면(기사가 많을 때) 지시문 안내대로 <b>1번 파일부터 순서대로</b> 보내세요.</div>
+  </div>
+
+  <div class="card">
+    <h2>자주 나오는 오류</h2>
+    <table>
+      <thead><tr><th>메시지</th><th>해결</th></tr></thead>
+      <tbody>
+        <tr><td>Client ID / Client Secret 을 입력하세요</td><td>검색 탭 맨 위 키 입력 칸을 채웁니다.</td></tr>
+        <tr><td>네이버 인증 실패</td><td>Client ID / Secret 을 다시 복사해 붙여넣습니다. 앞뒤 공백이나 한 글자 누락이 흔한 원인입니다.</td></tr>
+        <tr><td>네이버 API 권한 없음</td><td>Application 에서 "뉴스" 체크 후 <b>저장</b>했는지, Subscription 을 확인합니다 (1-③, ④).</td></tr>
+        <tr><td>일일 호출 한도 초과</td><td>검색 API 는 키 하나당 하루 25,000회까지 호출할 수 있습니다. 다음 날 다시 시도합니다.</td></tr>
+        <tr><td>해당 기간에 검색된 기사가 없습니다</td><td>기간을 늘리거나 키워드를 바꿔 봅니다.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="config.js?v=__BUILD__"></script>
 <script src="ai-export.js?v=__BUILD__"></script>
 <script>
   const FUNCTION_URL = window.NAVER_NEWS_FUNCTION_URL || '';
+  // 배포용 사이트(corp/config.js)는 사용자 키 입력 + 이용 안내 탭을 켠다
+  const IS_CORP = window.NEWS_COLLECTOR_MODE === 'corp';
   const BODY_BATCH = 20;     // Edge Function 1회 호출당 본문 수집 건수 (서버 최대 20)
   const BODY_PARALLEL = 2;   // 동시에 보낼 본문 수집 요청 수
   let ARTICLES = [];
@@ -173,7 +306,75 @@
     if (!b && ARTICLES.length) updateAiStats();
   }
 
+  // ------------------------------------------------------------------------- //
+  // 배포용 모드: 탭, 사용자 키, 이용 안내 캡처
+  // ------------------------------------------------------------------------- //
+  const KEY_ID = 'naver_hub_client_id', KEY_SECRET = 'naver_hub_client_secret';
+
+  function showTab(name) {
+    const guide = name === 'guide';
+    document.getElementById('tabSearch').hidden = guide;
+    document.getElementById('tabGuide').hidden = !guide;
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+    window.scrollTo(0, 0);
+  }
+
+  function userKeys() {
+    return { id: document.getElementById('clientId').value.trim(), secret: document.getElementById('clientSecret').value.trim() };
+  }
+
+  function saveKeys() {
+    const { id, secret } = userKeys();
+    const remember = document.getElementById('rememberKey').checked;
+    try {
+      if (remember) { localStorage.setItem(KEY_ID, id); localStorage.setItem(KEY_SECRET, secret); }
+      else { localStorage.removeItem(KEY_ID); localStorage.removeItem(KEY_SECRET); }
+      localStorage.setItem('naver_hub_remember', remember ? '1' : '0');
+    } catch (e) {}
+    document.getElementById('keyState').innerHTML = id && secret
+      ? '<span class="keyok">입력됨' + (remember ? ' · 이 브라우저에 저장됨' : '') + '</span>' : '— 아직 입력되지 않았습니다';
+  }
+
+  // 캡처 파일이 있으면 이미지로, 없으면 "캡처 준비 중" 자리로 보여준다
+  function loadShots() {
+    document.querySelectorAll('.shot[data-src]').forEach(fig => {
+      const src = fig.dataset.src;
+      const img = new Image();
+      img.alt = fig.querySelector('figcaption')?.textContent || '';
+      img.onload = () => fig.prepend(img);
+      img.onerror = () => {
+        const ph = document.createElement('div');
+        ph.className = 'ph';
+        ph.textContent = '캡처 준비 중 (' + src + ')';
+        fig.prepend(ph);
+      };
+      img.src = src + '?v=__BUILD__';
+    });
+  }
+
+  if (IS_CORP) {
+    document.getElementById('tabs').hidden = false;
+    document.getElementById('keyBox').hidden = false;
+    document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+    try {
+      document.getElementById('clientId').value = localStorage.getItem(KEY_ID) || '';
+      document.getElementById('clientSecret').value = localStorage.getItem(KEY_SECRET) || '';
+      document.getElementById('rememberKey').checked = localStorage.getItem('naver_hub_remember') !== '0';
+    } catch (e) {}
+    ['clientId', 'clientSecret', 'rememberKey'].forEach(id => document.getElementById(id).addEventListener('input', saveKeys));
+    document.getElementById('rememberKey').addEventListener('change', saveKeys);
+    saveKeys();
+    loadShots();
+    const { id, secret } = userKeys();
+    showTab(location.hash === '#guide' || !(id && secret) ? 'guide' : 'search');
+  }
+
   async function callFunction(payload) {
+    if (IS_CORP) {
+      const { id, secret } = userKeys();
+      payload = { ...payload, client_id: id, client_secret: secret };
+    }
     const res = await fetch(FUNCTION_URL, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
@@ -223,6 +424,14 @@
 
   async function doSearch() {
     if (busy) return;
+    if (IS_CORP) {
+      const { id, secret } = userKeys();
+      if (!id || !secret) {
+        alert('NAVER API HUB 의 Client ID / Client Secret 을 먼저 입력하세요.\n발급 방법은 "이용 안내" 탭을 참고하세요.');
+        document.getElementById(id ? 'clientSecret' : 'clientId').focus();
+        return;
+      }
+    }
     const keywords = parseKeywords(document.getElementById('keyword').value);
     if (!keywords.length) { alert('검색 키워드를 입력하세요.'); return; }
     const fetchBody = document.getElementById('fetchBody').checked;
