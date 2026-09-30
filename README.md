@@ -3,12 +3,8 @@
 키워드와 기간을 입력하면 **네이버 검색 API**로 뉴스를 모아
 `제목 · 일자 · 출처 · 주요 내용(본문)` 형태로 정리하고 **CSV / Excel**로 내려받는 간단한 웹 툴.
 
-두 가지 버전이 있습니다. 어느 쪽이든 먼저 네이버 API 키를 발급받으세요.
-
-| 버전 | 구성 | 특징 |
-|---|---|---|
-| [**웹 버전**](#웹-버전-supabase--github-pages) | GitHub Pages(`docs/`) + Supabase Edge Function(`supabase/`) | 서버를 켤 필요 없이 URL로 접속, 폰에서도 사용 가능. API 키는 Supabase에만 저장 |
-| [**로컬 버전**](#로컬-버전-python) | Python Flask(`app.py`) | 내 PC에서 실행 |
+구성: GitHub Pages(`docs/`) 화면 + Supabase Edge Function(`supabase/`). 서버를 켤 필요 없이 URL로 접속하고, API 키는 Supabase에만 저장됩니다.
+먼저 네이버 API 키를 발급받으세요.
 
 ## 네이버 API 키 발급 (1회)
 
@@ -19,8 +15,7 @@
 | **NAVER API HUB** (NAVER Cloud 콘솔) | `naverapihub.apigw.ntruss.com/search/v1/news` | `X-NCP-APIGW-API-KEY-ID` / `X-NCP-APIGW-API-KEY` |
 | **네이버 개발자센터** (developers.naver.com) | `openapi.naver.com/v1/search/news.json` | `X-Naver-Client-Id` / `X-Naver-Client-Secret` |
 
-- **웹 버전**은 NAVER API HUB 키가 기본이고, 개발자센터 키도 설정 하나로 쓸 수 있습니다([아래](#2-edge-function-배포) 참고).
-- **로컬 버전(Python)** 은 현재 **개발자센터 키만** 지원합니다.
+NAVER API HUB 키가 기본이고, 개발자센터 키도 설정 하나로 쓸 수 있습니다([아래](#2-edge-function-배포) 참고).
 
 ### NAVER API HUB
 
@@ -39,7 +34,7 @@
 
 ---
 
-# 웹 버전 (Supabase + GitHub Pages)
+# 배포 (Supabase + GitHub Pages)
 
 ```
 GitHub Pages (docs/index.html)
@@ -147,24 +142,11 @@ npx supabase secrets set NEWS_COLLECTOR_ALLOWED_ORIGINS=https://<GitHub 아이�
 
 ---
 
-# 로컬 버전 (Python)
-
-## 설치 & 실행
-
-```bash
-cd NAVER_News_collector
-python3 -m pip install -r requirements.txt
-python3 app.py
-```
-
-브라우저에서 **http://localhost:5000** 접속.
-
-- 처음 화면 상단 `🔑 API 인증 정보`에 Client ID / Secret 입력 (브라우저에 저장되어 다음부턴 생략)
-- 또는 `.env.example`을 `.env`로 복사해 키를 넣어두면 자동 입력됨
+# 사용 안내
 
 ## 사용법
 
-1. 검색 키워드 입력 — 회사를 부르는 이름이 여러 개면 쉼표로 구분 (예: `포스코인터내셔널, 포스코인터`). 이름마다 따로 검색해 중복을 합친 하나의 결과로 보여줍니다(웹 버전).
+1. 검색 키워드 입력 — 회사를 부르는 이름이 여러 개면 쉼표로 구분 (예: `포스코인터내셔널, 포스코인터`). 이름마다 따로 검색해 중복을 합친 하나의 결과로 보여줍니다.
 2. 시작일 / 종료일 선택
 3. **기사 본문 전체 수집** 체크 여부 결정
    - ✅ 체크: 각 기사 링크에 접속해 본문 전체를 "주요 내용"에 채움 (느림)
@@ -180,9 +162,8 @@ python3 app.py
 
 - **기간 필터**: 네이버 검색 API에는 날짜 파라미터가 없어, 받아온 기사 중 지정 기간 안의 것만 남기는 방식입니다.
 - **최대 1,000건**: API는 한 검색어·정렬당 1,000건까지만 조회 가능합니다. 기사가 많은 회사는 최신순 1,000건이 최근 한 달 안팎에서 끝납니다.
-  - **웹 버전**은 최신순과 **정확도순**을 함께 가져와 합칩니다. 정확도순은 날짜와 무관하게 관련도 높은 기사를 주므로 더 오래된 기간도 일부 채워지지만, 그 기간은 관련도 높은 기사 위주라 빠진 기사가 있을 수 있습니다(경고로 표시).
+  - 그래서 최신순과 **정확도순**을 함께 가져와 합칩니다. 정확도순은 날짜와 무관하게 관련도 높은 기사를 주므로 더 오래된 기간도 일부 채워지지만, 그 기간은 관련도 높은 기사 위주라 빠진 기사가 있을 수 있습니다(경고로 표시).
   - 합친 결과가 "최대 수집 건수"보다 많으면 기간 전체에서 고르게 추립니다.
-  - **로컬 버전(Python)** 은 최신순만 사용합니다.
 - **본문/출처 추출**: 네이버 뉴스(`n.news.naver.com`) 링크는 잘 추출됩니다. 외부 언론사 페이지는 구조가 제각각이라 일부 기사는 본문이 비거나 요약만 채워질 수 있습니다(best-effort).
 
 - 
