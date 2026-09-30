@@ -8,27 +8,12 @@
 
 ## 네이버 API 키 발급 (1회)
 
-네이버 검색 API 키는 두 곳에서 발급받을 수 있고, 호출 주소와 헤더가 서로 다릅니다.
-
-| 발급처 | 호출 주소 | 인증 헤더 |
-|---|---|---|
-| **NAVER API HUB** (NAVER Cloud 콘솔) | `naverapihub.apigw.ntruss.com/search/v1/news` | `X-NCP-APIGW-API-KEY-ID` / `X-NCP-APIGW-API-KEY` |
-| **네이버 개발자센터** (developers.naver.com) | `openapi.naver.com/v1/search/news.json` | `X-Naver-Client-Id` / `X-Naver-Client-Secret` |
-
-NAVER API HUB 키가 기본이고, 개발자센터 키도 설정 하나로 쓸 수 있습니다([아래](#2-edge-function-배포) 참고).
-
-### NAVER API HUB
+NAVER Cloud 콘솔의 **NAVER API HUB** 에서 발급받은 키를 사용합니다.
+(호출 주소 `naverapihub.apigw.ntruss.com/search/v1/news`, 인증 헤더 `X-NCP-APIGW-API-KEY-ID` / `X-NCP-APIGW-API-KEY`)
 
 1. NAVER Cloud 콘솔 → **Application Services → NAVER API HUB → Application**
 2. Application 등록(또는 수정) 화면에서 API 목록 중 **뉴스** (`NAVER_SCH_NEWS`) 체크 → 저장
 3. Application 의 인증 정보에서 **Client ID / Client Secret** 복사
-
-### 네이버 개발자센터
-
-1. [네이버 개발자센터](https://developers.naver.com) 로그인
-2. **Application → 애플리케이션 등록**
-3. 사용 API에서 **검색** 선택, 환경은 **WEB 설정**(주소는 `http://localhost` 아무거나)
-4. 발급된 **Client ID / Client Secret** 복사
 
 > 검색 API 하루 호출 한도는 25,000회입니다.
 
@@ -69,8 +54,6 @@ npx supabase link --project-ref <project-ref>
 # 네이버 API 키 등록 (서버에만 저장됨)
 # secrets 는 프로젝트 전체가 공유하므로 다른 함수와 겹치지 않도록 NEWS_COLLECTOR_ 접두사를 씁니다.
 npx supabase secrets set NEWS_COLLECTOR_NAVER_CLIENT_ID=발급받은ID NEWS_COLLECTOR_NAVER_CLIENT_SECRET=발급받은Secret
-# 개발자센터(developers.naver.com) 키라면 이것도 추가 (NAVER API HUB 키면 생략)
-# npx supabase secrets set NEWS_COLLECTOR_NAVER_API_PROVIDER=developers
 
 # 배포 (로그인 없이 호출할 수 있도록 JWT 검사 해제)
 npx supabase functions deploy naver-news --no-verify-jwt
@@ -82,7 +65,6 @@ npx supabase functions deploy naver-news --no-verify-jwt
 2. 함수 이름 `naver-news`, 코드 칸에 `supabase/functions/naver-news/index.ts` 내용을 전부 붙여넣고 Deploy
 3. 함수 상세 화면 → **Details** 에서 **JWT 검사(Verify JWT)** 를 **끄고** 저장
 4. **Edge Functions → Secrets** 에서 `NEWS_COLLECTOR_NAVER_CLIENT_ID`, `NEWS_COLLECTOR_NAVER_CLIENT_SECRET` 추가
-   (개발자센터 키라면 `NEWS_COLLECTOR_NAVER_API_PROVIDER` = `developers` 도 추가)
 
 ### 배포 확인
 
@@ -97,8 +79,8 @@ curl -X POST https://<project-ref>.supabase.co/functions/v1/naver-news \
 | 에러 | 해결 |
 |---|---|
 | `NEWS_COLLECTOR_NAVER_CLIENT_ID / NEWS_COLLECTOR_NAVER_CLIENT_SECRET 이 설정되지 않았습니다` | secrets 등록 후 다시 시도 |
-| `네이버 인증 실패` (401) | Client ID / Secret 오타 확인. 키 발급처(API HUB / 개발자센터)와 `NEWS_COLLECTOR_NAVER_API_PROVIDER` 설정이 맞는지 확인 |
-| `네이버 API 권한 없음` (403) | API HUB: Application 에 "뉴스" API 선택 / 개발자센터: 애플리케이션에 "검색" API 추가 |
+| `네이버 인증 실패` (401) | NAVER API HUB 의 Client ID / Secret 오타 확인 |
+| `네이버 API 권한 없음` (403) | NAVER API HUB → Application 에 "뉴스" API 선택·저장, Subscription 확인 |
 | `Invalid JWT` / `Missing authorization header` | JWT 검사 해제(`--no-verify-jwt`) 후 재배포 |
 
 ## 3. GitHub Pages 설정
