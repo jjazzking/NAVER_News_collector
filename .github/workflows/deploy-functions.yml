@@ -1,0 +1,41 @@
+# Supabase Edge Functions(naver-news, naver-news-corp)를 배포한다. PC 에 프로그램을 설치하지 않아도 된다.
+#   - main 에 supabase/ 변경이 푸시되면 자동 배포
+#   - Actions 탭 → "Deploy Supabase Functions" → Run workflow 로 수동 배포
+# 처음 한 번: 레포 Settings → Secrets and variables → Actions 에
+#   SUPABASE_ACCESS_TOKEN (Supabase 대시보드 → Account → Access Tokens 에서 발급) 을 등록해야 한다.
+name: Deploy Supabase Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/**"
+      - ".github/workflows/deploy-functions.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-supabase-functions
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # Supabase 프로젝트 ID (docs/config.js 의 함수 주소에 들어 있는 값)
+      PROJECT_REF: adqrvvcsvuageemtaljw
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check access token
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::레포 Settings → Secrets and variables → Actions 에 SUPABASE_ACCESS_TOKEN 을 등록하세요."
+            exit 1
+          fi
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Deploy naver-news
+        run: supabase functions deploy naver-news --project-ref "$PROJECT_REF" --no-verify-jwt --use-api
+      - name: Deploy naver-news-corp
+        run: supabase functions deploy naver-news-corp --project-ref "$PROJECT_REF" --no-verify-jwt --use-api
