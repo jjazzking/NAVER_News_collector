@@ -44,6 +44,13 @@
   h3 { margin:0 0 4px; font-size:16px; }
   .stats { font-size:13px; color:#374151; background:#f9fafb; border:1px solid var(--line); border-radius:8px;
            padding:10px 12px; margin-top:14px; }
+  /* AI 분석용 내보내기: 검색(흰색)과 구분되도록 보라색 계열 음영 */
+  .card.ai { background:#f5f3ff; border-color:#ddd6fe; }
+  .card.ai h3 { color:#5b21b6; }
+  .card.ai input, .card.ai select { border-color:#ddd6fe; background:#fff; }
+  .card.ai .stats { background:#fff; border-color:#ddd6fe; }
+  .card.ai button { background:#7c3aed; }
+  .card.ai button.ghost { background:#fff; color:#5b21b6; border-color:#c4b5fd; }
   /* 배포용(corp) 모드: 탭 / 키 입력 / 이용 안내 */
   .tabs { background:#fff; border-bottom:1px solid var(--line); padding:0 24px; display:flex; gap:4px; }
   .tabs button { background:none; color:var(--muted); border:0; border-bottom:3px solid transparent; border-radius:0;
@@ -139,7 +146,7 @@
     </div>
   </div>
 
-  <div class="card" id="aiCard" style="display:none">
+  <div class="card ai" id="aiCard" style="display:none">
     <h3>🤖 AI 분석용 내보내기</h3>
     <div class="hint" style="margin:0 0 16px">
       검색 결과를 AI(Copilot 등)가 읽기 좋은 JSON 으로 정리하고, 이슈별 분류·요약을 시키는 지시문을 함께 만듭니다.
