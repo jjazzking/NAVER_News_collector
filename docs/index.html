@@ -69,6 +69,22 @@
               padding:28px 16px; text-align:center; }
   .shot figcaption { font-size:12px; color:var(--muted); margin-top:6px; }
   .note { background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; padding:12px; border-radius:8px; font-size:13px; line-height:1.6; }
+  .note.must { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+  /* 이용 안내: 3단계 흐름 */
+  .flow { display:flex; align-items:stretch; gap:8px; margin:6px 0 4px; flex-wrap:wrap; }
+  .flow .step { flex:1; min-width:200px; border-radius:10px; padding:14px 16px; border:1px solid var(--line); background:#fff; }
+  .flow .step.s2, .flow .step.s3 { background:#f5f3ff; border-color:#ddd6fe; }
+  .flow .arrow { align-self:center; color:#9ca3af; font-size:22px; }
+  .flow .num { display:inline-block; width:24px; height:24px; line-height:24px; text-align:center; border-radius:50%;
+               background:var(--brand); color:#fff; font-weight:700; font-size:13px; margin-right:6px; }
+  .flow .s2 .num, .flow .s3 .num { background:#7c3aed; }
+  .flow .title { font-weight:700; font-size:15px; }
+  .flow .desc { font-size:13px; color:#4b5563; margin-top:6px; line-height:1.5; }
+  .stephead { display:flex; align-items:center; gap:8px; }
+  .stephead .num { width:28px; height:28px; line-height:28px; text-align:center; border-radius:50%; background:var(--brand);
+                   color:#fff; font-weight:700; }
+  .stephead.v .num { background:#7c3aed; }
+  @media (max-width: 720px) { .flow .arrow { display:none; } }
 </style>
 </head>
 <body>
@@ -191,19 +207,70 @@
 <div class="wrap guide" id="tabGuide" hidden>
 
   <div class="card">
-    <h2>이 도구로 할 수 있는 것</h2>
-    <ol>
-      <li>회사명으로 네이버 뉴스를 기간을 정해 모으고, 표로 보거나 <b>CSV / 엑셀</b>로 내려받습니다.</li>
-      <li>모은 기사를 <b>AI(Copilot)</b>에 넘겨 <b>이슈별 일자·요약·대표 기사 링크</b>를 표와 엑셀로 받습니다.</li>
-    </ol>
-    <div class="note">처음 한 번은 본인의 <b>NAVER API HUB</b> 키(Client ID / Client Secret)를 발급받아야 합니다. 아래 1번부터 따라 하세요.</div>
+    <h2>한눈에 보기 — 3단계</h2>
+    <div class="flow">
+      <div class="step s1">
+        <div><span class="num">1</span><span class="title">검색</span></div>
+        <div class="desc">회사명과 기간을 넣고 <b>검색</b>. 최대 수집 건수는 <b>1,000</b> 추천.</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step s2">
+        <div><span class="num">2</span><span class="title">JSON 다운로드 &amp; 지시문 복사</span></div>
+        <div class="desc">보라색 <b>AI 분석용 내보내기</b>에서 <b>JSON 내보내기</b> → <b>지시문 복사</b>.</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step s3">
+        <div><span class="num">3</span><span class="title">Copilot 에 업로드 &amp; 전송</span></div>
+        <div class="desc">모델을 <b>Opus</b> 로 바꾸고, JSON 첨부 + 지시문 붙여넣기 → 전송.</div>
+      </div>
+    </div>
+    <p class="hint">처음 쓰는 경우 먼저 <a href="#setup" onclick="document.getElementById('setup').scrollIntoView();return false;">NAVER API HUB 키 발급·입력</a>(아래)을 한 번 해 두세요.</p>
   </div>
 
   <div class="card">
-    <h2>1. NAVER API HUB 키 발급 (처음 한 번)</h2>
+    <div class="stephead"><span class="num">1</span><h2 style="margin:0">검색</h2></div>
+    <figure class="shot" data-src="guide/step1-search.png"><figcaption>검색 탭 — 키워드 · 기간 · 최대 수집 건수 입력 후 검색</figcaption></figure>
+    <ol>
+      <li><b>검색 키워드</b>: 회사명을 입력합니다. 기사마다 부르는 이름이 다르면 쉼표로 여러 개 입력하세요 (예: <code>포스코인터내셔널, 포스코인터</code>).</li>
+      <li><b>시작일 / 종료일</b>: 모을 기간을 정합니다.</li>
+      <li><b>최대 수집 건수는 1,000 으로 두는 것을 추천</b>합니다. 기사를 많이 모을수록 기간 전체가 고르게 채워집니다.</li>
+      <li><b>기사 본문 전체 수집</b>은 켜 두세요. AI 가 요약을 더 정확하게 합니다.</li>
+      <li><b>검색</b>을 누릅니다.</li>
+    </ol>
+    <div class="note">⏳ 1,000건에 본문까지 모으면 <b>시간이 꽤 걸립니다.</b> 검색을 눌러 두고 <b>잠시 다른 작업을 하다 돌아오세요.</b>
+      진행 상황은 검색 버튼 옆에 표시됩니다. 그동안 <b>이 창을 닫거나 새로고침하지 마세요</b> (다른 탭·프로그램으로 옮겨 가는 것은 괜찮습니다).</div>
+    <p class="hint">결과를 표로 보거나 <b>CSV / Excel 다운로드</b>로 그대로 받을 수도 있습니다.</p>
+  </div>
+
+  <div class="card">
+    <div class="stephead v"><span class="num">2</span><h2 style="margin:0">JSON 다운로드 &amp; 지시문 복사</h2></div>
+    <figure class="shot" data-src="guide/step2-export.png"><figcaption>검색 결과 아래 보라색 "AI 분석용 내보내기"</figcaption></figure>
+    <ol>
+      <li><b>회사명</b>·<b>다른 이름</b>이 맞는지 확인합니다 (검색 키워드가 자동으로 들어갑니다).</li>
+      <li><b>JSON 내보내기</b>를 눌러 파일을 저장합니다.</li>
+      <li><b>지시문 복사</b>를 누릅니다.</li>
+    </ol>
+    <div class="note">기사가 많으면 JSON 이 여러 개(<code>part1of2</code>, <code>part2of2</code> …)로 나뉘어 저장됩니다. 3단계에서 <b>1번 파일부터 순서대로</b> 보내세요.</div>
+  </div>
+
+  <div class="card">
+    <div class="stephead v"><span class="num">3</span><h2 style="margin:0">Copilot 에 업로드 &amp; 지시문 보내기</h2></div>
+    <div class="note must" style="margin:10px 0">⚠ <b>모델은 반드시 Opus 로 선택하세요.</b> 다른 모델은 이슈 분류·요약 품질이 크게 떨어지거나 지시한 형식을 지키지 않을 수 있습니다.</div>
+    <figure class="shot" data-src="guide/step3-copilot.png"><figcaption>Copilot — 모델 Opus 선택, JSON 첨부, 지시문 붙여넣기</figcaption></figure>
+    <ol>
+      <li>Copilot 에서 <b>새 대화</b>를 엽니다.</li>
+      <li>모델을 <b>Opus</b> 로 바꿉니다.</li>
+      <li>2단계에서 저장한 <b>JSON 파일을 첨부</b>합니다.</li>
+      <li>복사한 <b>지시문을 붙여넣고 보냅니다.</b></li>
+      <li>이슈별 <b>일자 · 이슈 · 요약 · 대표 기사 링크</b>가 표와 엑셀 파일로 나옵니다. (엑셀을 못 만드는 환경이면 CSV 로 나옵니다)</li>
+    </ol>
+  </div>
+
+  <div class="card" id="setup">
+    <h2>처음 한 번: NAVER API HUB 키 발급 · 입력</h2>
+    <p>검색하려면 본인의 NAVER API HUB 키(Client ID / Client Secret)가 필요합니다.</p>
 
     <h4>① NAVER Cloud 콘솔 로그인</h4>
-    <p>NAVER Cloud 콘솔에 로그인합니다.</p>
     <figure class="shot" data-src="guide/01-console.png"><figcaption>NAVER Cloud 콘솔 첫 화면</figcaption></figure>
 
     <h4>② NAVER API HUB 에서 Application 등록</h4>
@@ -219,57 +286,26 @@
     <figure class="shot" data-src="guide/04-subscription.png"><figcaption>Subscription 메뉴</figcaption></figure>
 
     <h4>⑤ Client ID / Client Secret 복사</h4>
-    <p>등록한 Application 의 인증 정보에서 <b>Client ID</b> 와 <b>Client Secret</b> 을 복사해 둡니다.</p>
+    <p>등록한 Application 의 인증 정보에서 <b>Client ID</b> 와 <b>Client Secret</b> 을 복사합니다.</p>
     <figure class="shot" data-src="guide/05-credentials.png"><figcaption>Application 인증 정보</figcaption></figure>
-  </div>
 
-  <div class="card">
-    <h2>2. 키 입력</h2>
-    <p><a href="#search" onclick="showTab('search');return false;">검색</a> 탭 맨 위 <b>🔑 NAVER API HUB 인증 정보</b> 칸에 복사한 Client ID / Client Secret 을 붙여넣습니다.</p>
-    <ul>
-      <li><b>이 브라우저에 저장</b>을 켜 두면 다음부터 다시 입력하지 않아도 됩니다. 공용 PC라면 끄세요.</li>
-      <li>키는 검색할 때 네이버 호출에만 쓰이고, 서버에 저장되지 않습니다.</li>
-    </ul>
+    <h4>⑥ 이 사이트에 키 입력</h4>
+    <p><a href="#search" onclick="showTab('search');return false;">검색</a> 탭 맨 위 <b>🔑 NAVER API HUB 인증 정보</b> 칸에 붙여넣습니다.
+      <b>이 브라우저에 저장</b>을 켜 두면 다음부터 다시 입력하지 않아도 됩니다 (공용 PC라면 끄세요).
+      키는 검색할 때 네이버 호출에만 쓰이고, 서버에 저장되지 않습니다.</p>
     <figure class="shot" data-src="guide/06-enter-key.png"><figcaption>키 입력 칸</figcaption></figure>
   </div>
 
   <div class="card">
-    <h2>3. 검색하고 내려받기</h2>
-    <ol>
-      <li><b>검색 키워드</b>: 회사명을 입력합니다. 기사마다 부르는 이름이 다르면 쉼표로 여러 개 입력하세요 (예: <code>포스코인터내셔널, 포스코인터</code>). 이름마다 따로 검색해 중복을 합친 하나의 결과로 보여줍니다.</li>
-      <li><b>시작일 / 종료일</b>: 모을 기간을 정합니다.</li>
-      <li><b>최대 수집 건수</b>: 이름 하나당 최대 몇 건을 모을지 정합니다 (최대 1,000).</li>
-      <li><b>기사 본문 전체 수집</b>: 켜면 기사 링크에 접속해 본문까지 가져옵니다(느림). 끄면 네이버가 주는 짧은 요약만 씁니다(빠름).</li>
-      <li><b>검색</b> → 표에서 확인 → <b>CSV 다운로드</b> / <b>Excel 다운로드</b></li>
-    </ol>
-    <figure class="shot" data-src="guide/07-search.png"><figcaption>검색 결과 화면</figcaption></figure>
-    <div class="note">네이버 API 는 검색어 하나당 1,000건까지만 주고 기간 지정 기능이 없습니다. 기사가 많은 회사를 긴 기간으로 검색하면
-      "최신순 검색은 ○○까지만 닿았습니다" 경고가 뜨고, 그 이전 기간은 관련도 높은 기사 위주로만 채워집니다.</div>
-  </div>
-
-  <div class="card">
-    <h2>4. AI(Copilot)로 이슈 정리하기</h2>
-    <ol>
-      <li>검색 결과 아래 <b>🤖 AI 분석용 내보내기</b> 에서 <b>회사명</b>과 <b>다른 이름</b>을 확인합니다. (검색 키워드가 자동으로 들어갑니다)</li>
-      <li><b>JSON 내보내기</b> 를 눌러 파일을 저장합니다.</li>
-      <li><b>지시문 복사</b> 를 누릅니다.</li>
-      <li>Copilot 에서 <b>새 대화</b>를 열고, 저장한 JSON 파일을 첨부한 뒤 지시문을 붙여넣어 보냅니다.</li>
-      <li>이슈별 <b>일자 · 이슈 · 요약 · 대표 기사 링크</b>가 표와 엑셀 파일로 나옵니다. (엑셀을 못 만드는 환경이면 CSV 로 나옵니다)</li>
-    </ol>
-    <figure class="shot" data-src="guide/08-ai-export.png"><figcaption>AI 분석용 내보내기</figcaption></figure>
-    <figure class="shot" data-src="guide/09-copilot.png"><figcaption>Copilot 에 JSON 첨부 + 지시문 붙여넣기</figcaption></figure>
-    <div class="note">JSON 이 여러 개로 나뉘어 저장되면(기사가 많을 때) 지시문 안내대로 <b>1번 파일부터 순서대로</b> 보내세요.</div>
-  </div>
-
-  <div class="card">
-    <h2>자주 나오는 오류</h2>
+    <h2>자주 나오는 오류 · 참고</h2>
     <table>
       <thead><tr><th>메시지</th><th>해결</th></tr></thead>
       <tbody>
         <tr><td>Client ID / Client Secret 을 입력하세요</td><td>검색 탭 맨 위 키 입력 칸을 채웁니다.</td></tr>
         <tr><td>네이버 인증 실패</td><td>Client ID / Secret 을 다시 복사해 붙여넣습니다. 앞뒤 공백이나 한 글자 누락이 흔한 원인입니다.</td></tr>
-        <tr><td>네이버 API 권한 없음</td><td>Application 에서 "뉴스" 체크 후 <b>저장</b>했는지, Subscription 을 확인합니다 (1-③, ④).</td></tr>
+        <tr><td>네이버 API 권한 없음</td><td>Application 에서 "뉴스" 체크 후 <b>저장</b>했는지, Subscription 을 확인합니다 (키 발급 ③, ④).</td></tr>
         <tr><td>일일 호출 한도 초과</td><td>검색 API 는 키 하나당 하루 25,000회까지 호출할 수 있습니다. 다음 날 다시 시도합니다.</td></tr>
+        <tr><td>"최신순 검색은 ○○까지만 닿았습니다"</td><td>네이버 API 는 검색어 하나당 1,000건까지만 주고 기간 지정 기능이 없어, 기사가 많은 회사를 긴 기간으로 검색하면 오래된 기간은 관련도 높은 기사 위주로만 채워집니다.</td></tr>
         <tr><td>해당 기간에 검색된 기사가 없습니다</td><td>기간을 늘리거나 키워드를 바꿔 봅니다.</td></tr>
       </tbody>
     </table>
