@@ -36,6 +36,6 @@ jobs:
         with:
           version: latest
       - name: Deploy naver-news
-        run: supabase functions deploy naver-news --project-ref "$PROJECT_REF" --no-verify-jwt
+        run: supabase functions deploy naver-news --project-ref "$PROJECT_REF" --no-verify-jwt --use-api
       - name: Deploy naver-news-corp
-        run: supabase functions deploy naver-news-corp --project-ref "$PROJECT_REF" --no-verify-jwt
+        run: supabase functions deploy naver-news-corp --project-ref "$PROJECT_REF" --no-verify-jwt --use-api

@@ -78,8 +78,10 @@ npx supabase functions deploy naver-news-corp --no-verify-jwt
 
 `.github/workflows/deploy-functions.yml` 이 두 함수를 배포합니다. `main` 에 `supabase/` 변경이 합쳐지면 자동으로 돌고, 수동으로도 돌릴 수 있습니다.
 
-1. Supabase 대시보드 → 오른쪽 위 계정 메뉴 → **Account preferences → Access Tokens** → **Generate new token** → 토큰 복사
-   (이 토큰은 본인 계정의 모든 Supabase 프로젝트를 다룰 수 있으므로 다른 곳에 공유하지 마세요)
+1. Supabase 대시보드 → 오른쪽 위 계정 메뉴 → **Account preferences → Access Tokens** → 새 토큰 생성 → 토큰 복사
+   - 가능하면 **범위를 제한한(scoped) 토큰**으로 만드세요: 이 프로젝트 하나만 선택하고 권한은 **Edge Functions: Read-write** 만 줍니다.
+   - 전체 권한(full access / classic) 토큰도 동작하지만 본인 계정의 모든 프로젝트를 다룰 수 있으므로 권장하지 않습니다.
+   - 워크플로가 권한 부족(403) 오류로 실패하면, 오류에 나온 권한을 추가하세요.
 2. GitHub 레포 → **Settings → Secrets and variables → Actions → New repository secret**
    - Name: `SUPABASE_ACCESS_TOKEN`, Secret: 1번 토큰
 3. **Actions → Deploy Supabase Functions → Run workflow** (처음 한 번). 이후에는 `supabase/` 가 바뀌어 `main` 에 합쳐질 때 자동 배포됩니다.
