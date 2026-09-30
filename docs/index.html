@@ -6,100 +6,117 @@
 <title>네이버 뉴스 검색 정리 툴</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="theme-color" content="#03c75a">
+<meta name="theme-color" content="#ffffff">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
 <style>
-  :root { --brand:#03c75a; --bg:#f5f6f8; --line:#e3e5e8; --muted:#6b7280; }
+  /* 노션 느낌: 흰 바탕, 따뜻한 회색 글자·선, 절제된 강조색, 배경색 콜아웃 */
+  :root { --text:#37352f; --muted:#787774; --line:#e9e9e7; --hover:#f1f1ef; --soft:#f7f6f3;
+          --accent:#2383e2; --brand:#03c75a;
+          --purple:#6940a5; --purple-bg:#f6f3f9; --purple-line:#e4dcef;
+          --blue-bg:#e7f3f8; --blue-tx:#1f5f8b; --red-bg:#fdebec; --red-tx:#9f2f2d;
+          --yellow-bg:#fbf3db; --yellow-tx:#7a5a12; }
   * { box-sizing: border-box; }
   [hidden] { display:none !important; }
-  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","맑은 고딕",sans-serif;
-         background:var(--bg); color:#1f2328; }
-  header { background:var(--brand); color:#fff; padding:18px 24px; font-size:20px; font-weight:700;
-           display:flex; align-items:center; gap:10px; }
-  header .logo { width:30px; height:30px; border-radius:7px; box-shadow:0 0 0 2px rgba(255,255,255,.55); }
-  .wrap { max-width:1100px; margin:0 auto; padding:24px; }
-  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:20px; }
-  label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#374151; }
-  input[type=text],input[type=password],input[type=date],input[type=number] {
-    width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; }
+  body { margin:0; background:#fff; color:var(--text); -webkit-font-smoothing:antialiased;
+         font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic","맑은 고딕",sans-serif; }
+  .shell { max-width:960px; margin:0 auto; padding:0 24px; }
+  header.shell { padding-top:44px; padding-bottom:6px; }
+  header .logo { width:52px; height:52px; border-radius:12px; display:block; margin-bottom:14px; }
+  header h1 { margin:0; font-size:32px; font-weight:700; letter-spacing:-.02em; }
+  header .sub { margin-top:6px; color:var(--muted); font-size:15px; }
+  .wrap { max-width:960px; margin:0 auto; padding:24px 24px 64px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:22px 24px; margin-bottom:18px; }
+  label { display:block; font-size:13px; font-weight:500; margin-bottom:6px; color:var(--muted); }
+  input[type=text],input[type=password],input[type=date],input[type=number],select {
+    width:100%; padding:8px 10px; border:0; border-radius:6px; font:inherit; font-size:14px; color:var(--text);
+    background:var(--soft); box-shadow:inset 0 0 0 1px rgba(15,15,15,.1); transition:box-shadow .12s, background .12s; }
+  input:focus, select:focus { outline:0; background:#fff; box-shadow:inset 0 0 0 1px var(--accent), 0 0 0 3px rgba(35,131,226,.18); }
   .row { display:flex; gap:16px; flex-wrap:wrap; }
   .row > div { flex:1; min-width:160px; }
-  .cred { border:1px dashed var(--line); border-radius:8px; padding:14px; margin-bottom:16px; background:#fafbfc; }
-  summary { cursor:pointer; font-weight:600; font-size:13px; color:#374151; }
-  .chk { display:flex; align-items:center; gap:8px; margin-top:14px; font-size:14px; }
-  .chk input { width:auto; }
-  button { background:var(--brand); color:#fff; border:0; border-radius:8px; padding:12px 22px;
-           font-size:15px; font-weight:700; cursor:pointer; }
-  button:disabled { opacity:.5; cursor:not-allowed; }
-  button.ghost { background:#fff; color:#1f2328; border:1px solid var(--line); }
-  .actions { display:flex; gap:10px; align-items:center; margin-top:16px; flex-wrap:wrap; }
-  .hint { font-size:12px; color:var(--muted); margin-top:6px; }
-  .warn { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:12px; border-radius:8px;
-          font-size:13px; margin-bottom:16px; }
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  th,td { border-bottom:1px solid var(--line); padding:10px; text-align:left; vertical-align:top; }
-  th { background:#f9fafb; font-size:12px; color:var(--muted); position:sticky; top:0; }
-  td.body { max-width:480px; white-space:pre-wrap; color:#374151; }
+  .cred { border-radius:8px; padding:16px; margin-bottom:18px; background:var(--soft); }
+  .cred input { background:#fff; }
+  summary { cursor:pointer; font-weight:500; font-size:13px; color:var(--text); }
+  .chk { display:flex; align-items:center; gap:8px; margin-top:14px; font-size:14px; color:var(--text); }
+  .chk input { width:auto; accent-color:var(--accent); }
+  button { background:var(--accent); color:#fff; border:0; border-radius:6px; padding:9px 18px; font:inherit;
+           font-size:14px; font-weight:600; cursor:pointer; transition:background .12s, filter .12s; }
+  button:hover:not(:disabled) { filter:brightness(.94); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  button.ghost { background:#fff; color:var(--text); box-shadow:inset 0 0 0 1px rgba(15,15,15,.16); font-weight:500; }
+  button.ghost:hover:not(:disabled) { background:var(--hover); filter:none; }
+  .actions { display:flex; gap:8px; align-items:center; margin-top:18px; flex-wrap:wrap; }
+  .hint { font-size:12.5px; color:var(--muted); margin-top:6px; line-height:1.55; }
+  .warn { background:var(--yellow-bg); color:var(--yellow-tx); padding:12px 14px; border-radius:6px;
+          font-size:13.5px; margin-bottom:16px; line-height:1.55; }
+  table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  th,td { border-bottom:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top; }
+  th { background:#fbfbfa; font-size:12px; font-weight:500; color:var(--muted); position:sticky; top:0; }
+  tbody tr:hover td { background:#fbfbfa; }
+  td.body { max-width:480px; white-space:pre-wrap; color:#54524c; }
   .tablewrap { max-height:560px; overflow:auto; border:1px solid var(--line); border-radius:8px; }
-  a { color:#0969da; text-decoration:none; }
-  .spin { display:inline-block; width:16px; height:16px; border:2px solid #fff; border-top-color:transparent;
-          border-radius:50%; animation:sp .8s linear infinite; vertical-align:middle; }
+  a { color:var(--text); text-decoration:underline; text-decoration-color:rgba(55,53,47,.3); text-underline-offset:2px; }
+  a:hover { text-decoration-color:var(--text); }
+  .spin { display:inline-block; width:14px; height:14px; border:2px solid #fff; border-top-color:transparent;
+          border-radius:50%; animation:sp .8s linear infinite; vertical-align:-2px; }
   @keyframes sp { to { transform:rotate(360deg); } }
   .count { font-size:14px; color:var(--muted); }
-  select { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:8px; font-size:14px; background:#fff; }
-  h3 { margin:0 0 4px; font-size:16px; }
-  .stats { font-size:13px; color:#374151; background:#f9fafb; border:1px solid var(--line); border-radius:8px;
-           padding:10px 12px; margin-top:14px; }
-  /* AI 분석용 내보내기: 검색(흰색)과 구분되도록 보라색 계열 음영 */
-  .card.ai { background:#f5f3ff; border-color:#ddd6fe; }
-  .card.ai h3 { color:#5b21b6; }
-  .card.ai input, .card.ai select { border-color:#ddd6fe; background:#fff; }
-  .card.ai .stats { background:#fff; border-color:#ddd6fe; }
-  .card.ai button { background:#7c3aed; }
-  .card.ai button.ghost { background:#fff; color:#5b21b6; border-color:#c4b5fd; }
-  /* 배포용(corp) 모드: 탭 / 키 입력 / 이용 안내 */
-  .tabs { background:#fff; border-bottom:1px solid var(--line); padding:0 24px; display:flex; gap:4px; }
-  .tabs button { background:none; color:var(--muted); border:0; border-bottom:3px solid transparent; border-radius:0;
-                 padding:14px 16px; font-size:15px; }
-  .tabs button.active { color:#1f2328; border-bottom-color:var(--brand); }
-  .keyok { color:#047857; font-weight:600; }
-  .guide h2 { font-size:18px; margin:0 0 12px; }
-  .guide h4 { font-size:15px; margin:18px 0 6px; }
-  .guide p, .guide li { font-size:14px; line-height:1.7; color:#374151; }
-  .guide ol, .guide ul { padding-left:20px; margin:6px 0; }
-  .guide code { background:#f3f4f6; padding:1px 5px; border-radius:4px; font-size:13px; }
+  h2 { font-size:20px; font-weight:700; letter-spacing:-.01em; }
+  h3 { margin:0 0 4px; font-size:16px; font-weight:700; }
+  .stats { font-size:13px; color:var(--text); background:var(--soft); border-radius:6px; padding:10px 12px; margin-top:14px; }
+  /* AI 분석용 내보내기: 검색(흰색)과 구분되도록 연보라 배경 */
+  .card.ai { background:var(--purple-bg); border-color:var(--purple-line); }
+  .card.ai h3 { color:var(--purple); }
+  .card.ai input, .card.ai select { background:#fff; }
+  .card.ai .stats { background:#fff; }
+  .card.ai button { background:#8a63c6; }
+  .card.ai button.ghost { background:#fff; color:var(--purple); box-shadow:inset 0 0 0 1px var(--purple-line); }
+  /* 탭 */
+  .tabs { border-bottom:1px solid var(--line); }
+  .tabs .shell { display:flex; gap:2px; }
+  .tabs button { background:none; color:var(--muted); border-radius:0; border-bottom:2px solid transparent;
+                 padding:12px 10px 10px; font-size:14px; font-weight:500; margin-bottom:-1px; }
+  .tabs button:hover { color:var(--text); filter:none; background:none; }
+  .tabs button.active { color:var(--text); border-bottom-color:var(--text); font-weight:600; }
+  .keyok { color:#2b7a4b; font-weight:600; }
+  /* 이용 안내 */
+  .guide h2 { margin:0 0 12px; }
+  .guide h4 { font-size:15px; font-weight:600; margin:22px 0 6px; }
+  .guide p, .guide li { font-size:14.5px; line-height:1.75; }
+  .guide ol, .guide ul { padding-left:22px; margin:6px 0; }
+  code { background:rgba(135,131,120,.15); color:#eb5757; padding:1px 5px; border-radius:4px; font-size:.88em;
+         font-family:SFMono-Regular,Menlo,Consolas,monospace; }
   .guide table { margin-top:8px; }
-  .shot { margin:10px 0 4px; }
-  .shot img { max-width:100%; border:1px solid var(--line); border-radius:8px; display:block; }
-  .shot .ph { border:2px dashed #cbd5e1; border-radius:8px; background:#f8fafc; color:#64748b; font-size:13px;
-              padding:28px 16px; text-align:center; }
-  .shot figcaption { font-size:12px; color:var(--muted); margin-top:6px; }
-  .note { background:#eff6ff; border:1px solid #bfdbfe; color:#1e3a8a; padding:12px; border-radius:8px; font-size:13px; line-height:1.6; }
-  .note.must { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+  .shot { margin:12px 0 6px; }
+  .shot img { max-width:100%; border:1px solid var(--line); border-radius:6px; display:block; }
+  .shot .ph { border-radius:6px; background:var(--soft); color:var(--muted); font-size:13px; padding:28px 16px; text-align:center; }
+  .shot figcaption { font-size:12.5px; color:var(--muted); margin-top:6px; }
+  /* 콜아웃 */
+  .note { background:var(--blue-bg); color:var(--blue-tx); padding:12px 14px; border-radius:6px; font-size:13.5px; line-height:1.65; }
+  .note.must { background:var(--red-bg); color:var(--red-tx); }
+  .note.check { background:var(--yellow-bg); color:var(--yellow-tx); margin-top:14px; }
   /* 이용 안내: 3단계 흐름 */
-  .flow { display:flex; align-items:stretch; gap:8px; margin:6px 0 4px; flex-wrap:wrap; }
-  .flow .step { flex:1; min-width:200px; border-radius:10px; padding:14px 16px; border:1px solid var(--line); background:#fff; }
-  .flow .step.s2 { background:#f5f3ff; border-color:#ddd6fe; }
-  .flow .arrow { align-self:center; color:#9ca3af; font-size:22px; }
-  .flow .num { display:inline-block; width:24px; height:24px; line-height:24px; text-align:center; border-radius:50%;
-               background:var(--brand); color:#fff; font-weight:700; font-size:13px; margin-right:6px; }
-  .flow .s2 .num { background:#7c3aed; }
-  .flow .s3 .num { background:#4b5563; }
-  .flow .title { font-weight:700; font-size:15px; }
-  .flow .desc { font-size:13px; color:#4b5563; margin-top:6px; line-height:1.5; }
-  .stephead { display:flex; align-items:center; gap:8px; }
-  .stephead .num { width:28px; height:28px; line-height:28px; text-align:center; border-radius:50%; background:var(--brand);
-                   color:#fff; font-weight:700; }
-  .stephead.v .num { background:#7c3aed; }
-  .stephead.g .num { background:#4b5563; }
-  @media (max-width: 720px) { .flow .arrow { display:none; } }
+  .flow { display:flex; align-items:stretch; gap:8px; margin:8px 0 4px; flex-wrap:wrap; }
+  .flow .step { flex:1; min-width:200px; border-radius:8px; padding:14px 16px; border:1px solid var(--line); background:#fff; }
+  .flow .step.s2 { background:var(--purple-bg); border-color:var(--purple-line); }
+  .flow .arrow { align-self:center; color:#c3c2bf; font-size:20px; }
+  .num { display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:6px;
+         background:var(--text); color:#fff; font-weight:700; font-size:12px; margin-right:8px; vertical-align:1px; }
+  .flow .s1 .num, .stephead.s .num { background:var(--brand); }
+  .flow .s2 .num, .stephead.v .num { background:#8a63c6; }
+  .flow .title { font-weight:600; font-size:15px; }
+  .flow .desc { font-size:13px; color:var(--muted); margin-top:8px; line-height:1.55; }
+  .stephead { display:flex; align-items:center; margin-bottom:4px; }
+  .stephead .num { width:26px; height:26px; font-size:13px; margin-right:10px; }
+  @media (max-width: 720px) { .flow .arrow { display:none; } header.shell { padding-top:28px; } header h1 { font-size:26px; } }
 </style>
 </head>
 <body>
-<header><img src="favicon.svg" alt="" class="logo">네이버 뉴스 검색 정리 툴</header>
-<nav class="tabs" id="tabs" hidden>
+<header class="shell"><img src="favicon.svg" alt="" class="logo"><h1>네이버 뉴스 검색 정리 툴</h1>
+  <div class="sub">회사 이름으로 기간 내 뉴스를 모으고, AI 이슈 분석용 파일까지 한 번에 만듭니다.</div></header>
+<nav class="tabs" id="tabs" hidden><div class="shell">
   <button type="button" data-tab="search" class="active">검색</button>
   <button type="button" data-tab="guide">이용 안내</button>
-</nav>
+</div></nav>
 <div class="wrap" id="tabSearch">
 
   <div class="card">
@@ -235,7 +252,7 @@
   </div>
 
   <div class="card">
-    <div class="stephead"><span class="num">1</span><h2 style="margin:0">검색</h2></div>
+    <div class="stephead s"><span class="num">1</span><h2 style="margin:0">검색</h2></div>
     <figure class="shot" data-src="step1-search.png"><figcaption>검색 탭 — 키워드 · 기간 · 최대 수집 건수 입력 후 검색</figcaption></figure>
     <ol>
       <li><b>검색 키워드</b>: 회사명을 입력합니다. 기사마다 부르는 이름이 다르면 쉼표로 여러 개 입력하세요 (예: <code>포스코인터내셔널, 포스코인터</code>).</li>
@@ -261,7 +278,7 @@
   </div>
 
   <div class="card">
-    <div class="stephead g"><span class="num">3</span><h2 style="margin:0">Copilot 에 업로드 &amp; 지시문 보내기</h2></div>
+    <div class="stephead"><span class="num">3</span><h2 style="margin:0">Copilot 에 업로드 &amp; 지시문 보내기</h2></div>
     <div class="note must" style="margin:10px 0">⚠ <b>모델은 반드시 Opus 로 선택하세요.</b> 다른 모델은 이슈 분류·요약 품질이 크게 떨어지거나 지시한 형식을 지키지 않을 수 있습니다.</div>
     <figure class="shot" data-src="step3-copilot.png"><figcaption>Copilot — ① 모델 선택 ② Claude → Opus ③ JSON 첨부 ④ 지시문 붙여넣기 ⑤ 보내기</figcaption></figure>
     <p>Copilot 에서 <b>새 대화</b>를 열고 그림의 번호 순서대로 진행합니다.</p>
@@ -273,6 +290,10 @@
       <li><b>보내기</b>를 누릅니다.</li>
     </ol>
     <p>잠시 뒤 이슈별 <b>일자 · 이슈 · 요약 · 대표 기사 링크</b>가 표와 엑셀 파일로 나옵니다. (엑셀을 못 만드는 환경이면 CSV 로 나옵니다)</p>
+    <div class="note check">🔍 <b>결과물은 마지막에 꼭 검토하세요.</b> 이 툴은 <b>회사 이름이 들어간 기사를 모두</b> 모으기 때문에,
+      회사와 직접 관련 없는 기사(다른 회사 기사에 이름만 스친 경우, 동명이인·비슷한 이름 등)가 섞이거나,
+      AI 가 이슈를 잘못 묶거나 요약을 부정확하게 할 수 있습니다. 보고에 쓰기 전에
+      <b>대표 기사 링크를 열어 내용과 일자를 확인</b>하고, 관계없는 이슈는 지우거나 고쳐 주세요.</div>
   </div>
 
   <div class="card corp-only" id="setup">
@@ -519,7 +540,7 @@
       const lists = [], warnings = [], errors = [];
       for (let i = 0; i < keywords.length; i++) {
         const kw = keywords[i];
-        setStatus('<span class="spin" style="border-color:#6b7280;border-top-color:transparent"></span> ' +
+        setStatus('<span class="spin" style="border-color:#787774;border-top-color:transparent"></span> ' +
           (keywords.length > 1 ? '"' + esc(kw) + '" 검색 중… (' + (i + 1) + '/' + keywords.length + ')' : '검색 중…'));
         const prefix = keywords.length > 1 ? '[' + kw + '] ' : '';
         try {
@@ -563,7 +584,7 @@
     const batches = [];
     for (let i = 0; i < ARTICLES.length; i += BODY_BATCH) batches.push(ARTICLES.slice(i, i + BODY_BATCH));
     let done = 0, failed = 0, next = 0;
-    const progress = () => setStatus('<span class="spin" style="border-color:#6b7280;border-top-color:transparent"></span> 본문 수집 중… ' + done + ' / ' + ARTICLES.length);
+    const progress = () => setStatus('<span class="spin" style="border-color:#787774;border-top-color:transparent"></span> 본문 수집 중… ' + done + ' / ' + ARTICLES.length);
     progress();
 
     async function worker() {
