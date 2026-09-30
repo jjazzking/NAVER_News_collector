@@ -74,7 +74,20 @@ npx supabase functions deploy naver-news-corp --no-verify-jwt
 
 `supabase/functions/_shared/news.ts` 를 고치면 **두 함수 모두** 다시 배포해야 합니다.
 
-> 두 함수가 공통 파일(`_shared/news.ts`)을 함께 쓰므로, 대시보드 편집기에 코드를 붙여넣는 방식은 쓸 수 없습니다. CLI 로 배포하세요.
+### 방법 B. GitHub Actions (프로그램 설치 없이, 브라우저만으로)
+
+`.github/workflows/deploy-functions.yml` 이 두 함수를 배포합니다. `main` 에 `supabase/` 변경이 합쳐지면 자동으로 돌고, 수동으로도 돌릴 수 있습니다.
+
+1. Supabase 대시보드 → 오른쪽 위 계정 메뉴 → **Account preferences → Access Tokens** → **Generate new token** → 토큰 복사
+   (이 토큰은 본인 계정의 모든 Supabase 프로젝트를 다룰 수 있으므로 다른 곳에 공유하지 마세요)
+2. GitHub 레포 → **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `SUPABASE_ACCESS_TOKEN`, Secret: 1번 토큰
+3. **Actions → Deploy Supabase Functions → Run workflow** (처음 한 번). 이후에는 `supabase/` 가 바뀌어 `main` 에 합쳐질 때 자동 배포됩니다.
+4. 다른 Supabase 프로젝트로 옮길 때는 워크플로 파일의 `PROJECT_REF` 를 바꿉니다.
+
+네이버 API 키 secrets(`NEWS_COLLECTOR_NAVER_CLIENT_ID` / `_SECRET`)는 대시보드 **Edge Functions → Secrets** 에서 등록합니다.
+
+> 두 함수가 공통 파일(`_shared/news.ts`)을 함께 쓰므로, 대시보드 편집기에 코드를 붙여넣는 방식은 쓸 수 없습니다.
 
 ### 배포 확인
 
