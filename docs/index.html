@@ -134,7 +134,7 @@
       </div>
       <div>
         <label>최대 수집 건수 (1~1000)</label>
-        <input type="number" id="maxCount" value="100" min="1" max="1000">
+        <input type="number" id="maxCount" value="1000" min="1" max="1000">
       </div>
     </div>
 
@@ -224,12 +224,12 @@
         <div class="desc">모델을 <b>Opus</b> 로 바꾸고, JSON 첨부 + 지시문 붙여넣기 → 전송.</div>
       </div>
     </div>
-    <p class="hint">처음 쓰는 경우 먼저 <a href="#setup" onclick="document.getElementById('setup').scrollIntoView();return false;">NAVER API HUB 키 발급·입력</a>(아래)을 한 번 해 두세요.</p>
+    <p class="hint corp-only">처음 쓰는 경우 먼저 <a href="#setup" onclick="document.getElementById('setup').scrollIntoView();return false;">NAVER API HUB 키 발급·입력</a>(아래)을 한 번 해 두세요.</p>
   </div>
 
   <div class="card">
     <div class="stephead"><span class="num">1</span><h2 style="margin:0">검색</h2></div>
-    <figure class="shot" data-src="guide/step1-search.png"><figcaption>검색 탭 — 키워드 · 기간 · 최대 수집 건수 입력 후 검색</figcaption></figure>
+    <figure class="shot" data-src="step1-search.png"><figcaption>검색 탭 — 키워드 · 기간 · 최대 수집 건수 입력 후 검색</figcaption></figure>
     <ol>
       <li><b>검색 키워드</b>: 회사명을 입력합니다. 기사마다 부르는 이름이 다르면 쉼표로 여러 개 입력하세요 (예: <code>포스코인터내셔널, 포스코인터</code>).</li>
       <li><b>시작일 / 종료일</b>: 모을 기간을 정합니다.</li>
@@ -244,7 +244,7 @@
 
   <div class="card">
     <div class="stephead v"><span class="num">2</span><h2 style="margin:0">JSON 다운로드 &amp; 지시문 복사</h2></div>
-    <figure class="shot" data-src="guide/step2-export.png"><figcaption>검색 결과 아래 보라색 "AI 분석용 내보내기"</figcaption></figure>
+    <figure class="shot" data-src="step2-export.png"><figcaption>검색 결과 아래 보라색 "AI 분석용 내보내기"</figcaption></figure>
     <ol>
       <li><b>회사명</b>·<b>다른 이름</b>이 맞는지 확인합니다 (검색 키워드가 자동으로 들어갑니다).</li>
       <li><b>JSON 내보내기</b>를 눌러 파일을 저장합니다.</li>
@@ -256,7 +256,7 @@
   <div class="card">
     <div class="stephead v"><span class="num">3</span><h2 style="margin:0">Copilot 에 업로드 &amp; 지시문 보내기</h2></div>
     <div class="note must" style="margin:10px 0">⚠ <b>모델은 반드시 Opus 로 선택하세요.</b> 다른 모델은 이슈 분류·요약 품질이 크게 떨어지거나 지시한 형식을 지키지 않을 수 있습니다.</div>
-    <figure class="shot" data-src="guide/step3-copilot.png"><figcaption>Copilot — ① 모델 선택 ② Claude → Opus ③ JSON 첨부 ④ 지시문 붙여넣기 ⑤ 보내기</figcaption></figure>
+    <figure class="shot" data-src="step3-copilot.png"><figcaption>Copilot — ① 모델 선택 ② Claude → Opus ③ JSON 첨부 ④ 지시문 붙여넣기 ⑤ 보내기</figcaption></figure>
     <p>Copilot 에서 <b>새 대화</b>를 열고 그림의 번호 순서대로 진행합니다.</p>
     <ol>
       <li>왼쪽 위 <b>모델 선택</b>(기본값 "자동")을 누릅니다.</li>
@@ -268,50 +268,51 @@
     <p>잠시 뒤 이슈별 <b>일자 · 이슈 · 요약 · 대표 기사 링크</b>가 표와 엑셀 파일로 나옵니다. (엑셀을 못 만드는 환경이면 CSV 로 나옵니다)</p>
   </div>
 
-  <div class="card" id="setup">
+  <div class="card corp-only" id="setup">
     <h2>처음 한 번: NAVER API HUB 키 발급 · 입력</h2>
     <p>검색하려면 본인의 NAVER API HUB 키(Client ID / Client Secret)가 필요합니다.</p>
 
     <h4>① NAVER Cloud 로그인 → 콘솔</h4>
     <p><a href="https://www.ncloud.com" target="_blank" rel="noopener">www.ncloud.com</a> 에 로그인한 뒤 오른쪽 위 <b>콘솔</b>을 누릅니다.</p>
-    <figure class="shot" data-src="guide/setup-01-console.png"><figcaption>NAVER Cloud 홈페이지 오른쪽 위 "콘솔"</figcaption></figure>
+    <figure class="shot" data-src="setup-01-console.png"><figcaption>NAVER Cloud 홈페이지 오른쪽 위 "콘솔"</figcaption></figure>
 
     <h4>② 콘솔에서 Menu 열기</h4>
     <p>콘솔 왼쪽 위 <b>Menu</b> 를 누릅니다.</p>
-    <figure class="shot" data-src="guide/setup-02-menu.png"><figcaption>콘솔 대시보드 왼쪽 위 "Menu"</figcaption></figure>
+    <figure class="shot" data-src="setup-02-menu.png"><figcaption>콘솔 대시보드 왼쪽 위 "Menu"</figcaption></figure>
 
     <h4>③ NAVER API HUB 선택</h4>
     <p><b>NAVER API HUB</b> 를 누릅니다. 목록에 없으면 <b>All Services → Application Services</b> 에서 찾거나, 위쪽 검색창에 "NAVER API HUB" 를 검색하세요.</p>
-    <figure class="shot" data-src="guide/setup-03-apihub.png"><figcaption>Menu 에서 "NAVER API HUB"</figcaption></figure>
+    <figure class="shot" data-src="setup-03-apihub.png"><figcaption>Menu 에서 "NAVER API HUB"</figcaption></figure>
 
     <h4>④ Application 등록</h4>
     <p><b>+ Application 등록</b> 을 누릅니다.</p>
-    <figure class="shot" data-src="guide/setup-04-register.png"><figcaption>Application Management → "+ Application 등록"</figcaption></figure>
+    <figure class="shot" data-src="setup-04-register.png"><figcaption>Application Management → "+ Application 등록"</figcaption></figure>
 
     <h4>⑤ API 선택: "뉴스" 체크 → 다음</h4>
     <p>API 목록에서 <b>뉴스</b> (NAVER Search News API) 카드를 체크하고 아래 <b>다음</b>을 누릅니다.</p>
-    <figure class="shot" data-src="guide/setup-05-select-news.png"><figcaption>① "뉴스" 체크 ② 다음</figcaption></figure>
+    <figure class="shot" data-src="setup-05-select-news.png"><figcaption>① "뉴스" 체크 ② 다음</figcaption></figure>
 
     <h4>⑥ Application 이름 입력 → 완료</h4>
     <p>이름은 자유롭게 정하면 됩니다 (예: <code>NewsCollector</code>). 입력 후 <b>완료</b>를 누릅니다.</p>
-    <figure class="shot" data-src="guide/setup-06-name.png"><figcaption>① 이름 입력 ② 완료</figcaption></figure>
+    <figure class="shot" data-src="setup-06-name.png"><figcaption>① 이름 입력 ② 완료</figcaption></figure>
     <details style="margin:8px 0">
       <summary style="font-size:13px;font-weight:400;color:var(--muted)">이미 만든 Application 이 있다면? (클릭)</summary>
       <p>새로 만들지 않고, 기존 Application 의 <b>수정</b> 화면에서 <b>뉴스</b>를 체크하고 <b>저장</b>해도 됩니다.
         체크만 하고 저장하지 않으면 검색 시 "권한 없음" 오류가 납니다.</p>
-      <figure class="shot" data-src="guide/setup-edit-news.png"><figcaption>Application 수정 → ① "뉴스" 체크 ② 저장</figcaption></figure>
+      <figure class="shot" data-src="setup-edit-news.png"><figcaption>Application 수정 → ① "뉴스" 체크 ② 저장</figcaption></figure>
     </details>
     <p class="hint">"권한 없음" 오류가 나면 왼쪽 <b>Subscription</b> 메뉴에서 검색 API 가 구독되어 있는지 확인하세요.</p>
 
     <h4>⑦ 인증 정보에서 Client ID / Client Secret 복사</h4>
     <p>만든 Application 을 선택하고 <b>인증 정보</b>를 눌러 <b>Client ID</b> 와 <b>Client Secret</b> 을 복사합니다.</p>
-    <figure class="shot" data-src="guide/setup-07-auth.png"><figcaption>Application 선택 → "인증 정보"</figcaption></figure>
+    <figure class="shot" data-src="setup-07-auth.png"><figcaption>Application 선택 → "인증 정보"</figcaption></figure>
+    <figure class="shot" data-src="setup-07b-keys.png"><figcaption>인증 정보 창 — ① Client ID 복사 ② Client Secret 복사 (재발급은 누르지 마세요: 기존 키가 바뀝니다)</figcaption></figure>
 
     <h4>⑧ 이 사이트에 키 입력</h4>
     <p><a href="#search" onclick="showTab('search');return false;">검색</a> 탭 맨 위 <b>🔑 NAVER API HUB 인증 정보</b> 칸에 붙여넣습니다.
       <b>이 브라우저에 저장</b>을 켜 두면 다음부터 다시 입력하지 않아도 됩니다 (공용 PC라면 끄세요).
       키는 검색할 때 네이버 호출에만 쓰이고, 서버에 저장되지 않습니다.</p>
-    <figure class="shot" data-src="guide/setup-08-enter-key.png"><figcaption>키 입력 칸</figcaption></figure>
+    <figure class="shot" data-src="setup-08-enter-key.png"><figcaption>키 입력 칸</figcaption></figure>
   </div>
 
   <div class="card">
@@ -319,9 +320,9 @@
     <table>
       <thead><tr><th>메시지</th><th>해결</th></tr></thead>
       <tbody>
-        <tr><td>Client ID / Client Secret 을 입력하세요</td><td>검색 탭 맨 위 키 입력 칸을 채웁니다.</td></tr>
-        <tr><td>네이버 인증 실패</td><td>Client ID / Secret 을 다시 복사해 붙여넣습니다. 앞뒤 공백이나 한 글자 누락이 흔한 원인입니다.</td></tr>
-        <tr><td>네이버 API 권한 없음</td><td>Application 에서 "뉴스" 체크 후 <b>저장</b>했는지, Subscription 을 확인합니다 (키 발급 ⑤, ⑥).</td></tr>
+        <tr class="corp-only"><td>Client ID / Client Secret 을 입력하세요</td><td>검색 탭 맨 위 키 입력 칸을 채웁니다.</td></tr>
+        <tr class="corp-only"><td>네이버 인증 실패</td><td>Client ID / Secret 을 다시 복사해 붙여넣습니다. 앞뒤 공백이나 한 글자 누락이 흔한 원인입니다.</td></tr>
+        <tr class="corp-only"><td>네이버 API 권한 없음</td><td>Application 에서 "뉴스" 체크 후 <b>저장</b>했는지, Subscription 을 확인합니다 (키 발급 ⑤, ⑥).</td></tr>
         <tr><td>일일 호출 한도 초과</td><td>검색 API 는 키 하나당 하루 25,000회까지 호출할 수 있습니다. 다음 날 다시 시도합니다.</td></tr>
         <tr><td>"최신순 검색은 ○○까지만 닿았습니다"</td><td>네이버 API 는 검색어 하나당 1,000건까지만 주고 기간 지정 기능이 없어, 기사가 많은 회사를 긴 기간으로 검색하면 오래된 기간은 관련도 높은 기사 위주로만 채워집니다.</td></tr>
         <tr><td>해당 기간에 검색된 기사가 없습니다</td><td>기간을 늘리거나 키워드를 바꿔 봅니다.</td></tr>
@@ -371,6 +372,8 @@
   // 배포용 모드: 탭, 사용자 키, 이용 안내 캡처
   // ------------------------------------------------------------------------- //
   const KEY_ID = 'naver_hub_client_id', KEY_SECRET = 'naver_hub_client_secret';
+  // 이용 안내 캡처는 docs/corp/guide/ 에 있다 (본인용 사이트는 한 단계 위에서 참조)
+  const GUIDE_BASE = IS_CORP ? 'guide/' : 'corp/guide/';
 
   function showTab(name) {
     const guide = name === 'guide';
@@ -407,17 +410,23 @@
       img.onerror = () => {
         const ph = document.createElement('div');
         ph.className = 'ph';
-        ph.textContent = '캡처 준비 중 (' + src + ')';
+        ph.textContent = '캡처 준비 중 (' + GUIDE_BASE + src + ')';
         fig.prepend(ph);
       };
-      img.src = src + '?v=__BUILD__';
+      img.src = GUIDE_BASE + src + '?v=__BUILD__';
     });
   }
 
-  if (IS_CORP) {
-    document.getElementById('tabs').hidden = false;
+  // 탭 / 이용 안내는 두 사이트 모두. 키 발급·입력 관련 내용(.corp-only)은 배포용에서만 보인다.
+  document.getElementById('tabs').hidden = false;
+  document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+  if (!IS_CORP) document.querySelectorAll('.corp-only').forEach(el => { el.hidden = true; });
+  loadShots();
+
+  if (!IS_CORP) {
+    showTab(location.hash === '#guide' ? 'guide' : 'search');
+  } else {
     document.getElementById('keyBox').hidden = false;
-    document.querySelectorAll('#tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
     try {
       document.getElementById('clientId').value = localStorage.getItem(KEY_ID) || '';
       document.getElementById('clientSecret').value = localStorage.getItem(KEY_SECRET) || '';
@@ -426,7 +435,6 @@
     ['clientId', 'clientSecret', 'rememberKey'].forEach(id => document.getElementById(id).addEventListener('input', saveKeys));
     document.getElementById('rememberKey').addEventListener('change', saveKeys);
     saveKeys();
-    loadShots();
     const { id, secret } = userKeys();
     showTab(location.hash === '#guide' || !(id && secret) ? 'guide' : 'search');
   }
@@ -513,7 +521,7 @@
             keyword: kw,
             start_date: document.getElementById('startDate').value,
             end_date: document.getElementById('endDate').value,
-            max_count: parseInt(document.getElementById('maxCount').value) || 100,
+            max_count: parseInt(document.getElementById('maxCount').value) || 1000,
           });
           lists.push(data.articles || []);
           if (data.warning) warnings.push(prefix + data.warning);
