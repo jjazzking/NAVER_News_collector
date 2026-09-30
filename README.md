@@ -3,53 +3,45 @@
 키워드와 기간을 입력하면 **네이버 검색 API**로 뉴스를 모아
 `제목 · 일자 · 출처 · 주요 내용(본문)` 형태로 정리하고 **CSV / Excel**로 내려받는 간단한 웹 툴.
 
-두 가지 버전이 있습니다. 어느 쪽이든 먼저 네이버 API 키를 발급받으세요.
-
-| 버전 | 구성 | 특징 |
-|---|---|---|
-| [**웹 버전**](#웹-버전-supabase--github-pages) | GitHub Pages(`docs/`) + Supabase Edge Function(`supabase/`) | 서버를 켤 필요 없이 URL로 접속, 폰에서도 사용 가능. API 키는 Supabase에만 저장 |
-| [**로컬 버전**](#로컬-버전-python) | Python Flask(`app.py`) | 내 PC에서 실행 |
+구성: GitHub Pages(`docs/`) 화면 + Supabase Edge Function(`supabase/`). 서버를 켤 필요 없이 URL로 접속하고, API 키는 Supabase에만 저장됩니다.
+먼저 네이버 API 키를 발급받으세요.
 
 ## 네이버 API 키 발급 (1회)
 
-네이버 검색 API 키는 두 곳에서 발급받을 수 있고, 호출 주소와 헤더가 서로 다릅니다.
-
-| 발급처 | 호출 주소 | 인증 헤더 |
-|---|---|---|
-| **NAVER API HUB** (NAVER Cloud 콘솔) | `naverapihub.apigw.ntruss.com/search/v1/news` | `X-NCP-APIGW-API-KEY-ID` / `X-NCP-APIGW-API-KEY` |
-| **네이버 개발자센터** (developers.naver.com) | `openapi.naver.com/v1/search/news.json` | `X-Naver-Client-Id` / `X-Naver-Client-Secret` |
-
-- **웹 버전**은 NAVER API HUB 키가 기본이고, 개발자센터 키도 설정 하나로 쓸 수 있습니다([아래](#2-edge-function-배포) 참고).
-- **로컬 버전(Python)** 은 현재 **개발자센터 키만** 지원합니다.
-
-### NAVER API HUB
+NAVER Cloud 콘솔의 **NAVER API HUB** 에서 발급받은 키를 사용합니다.
+(호출 주소 `naverapihub.apigw.ntruss.com/search/v1/news`, 인증 헤더 `X-NCP-APIGW-API-KEY-ID` / `X-NCP-APIGW-API-KEY`)
 
 1. NAVER Cloud 콘솔 → **Application Services → NAVER API HUB → Application**
 2. Application 등록(또는 수정) 화면에서 API 목록 중 **뉴스** (`NAVER_SCH_NEWS`) 체크 → 저장
 3. Application 의 인증 정보에서 **Client ID / Client Secret** 복사
 
-### 네이버 개발자센터
-
-1. [네이버 개발자센터](https://developers.naver.com) 로그인
-2. **Application → 애플리케이션 등록**
-3. 사용 API에서 **검색** 선택, 환경은 **WEB 설정**(주소는 `http://localhost` 아무거나)
-4. 발급된 **Client ID / Client Secret** 복사
-
 > 검색 API 하루 호출 한도는 25,000회입니다.
 
 ---
 
-# 웹 버전 (Supabase + GitHub Pages)
+# 배포 (Supabase + GitHub Pages)
+
+사이트 두 개가 같은 화면 코드와 같은 검색 로직을 공유합니다.
+
+| 사이트 | 주소 | 호출하는 함수 | 네이버 API 키 |
+|---|---|---|---|
+| 본인용 | `…/NAVER_News_collector/` | `naver-news` | Supabase secrets 에 저장된 키 |
+| 배포용 | `…/NAVER_News_collector/corp/` | `naver-news-corp` | 사용자가 화면에 입력 (브라우저에만 저장). 키가 없으면 함수가 거절 |
 
 ```
-GitHub Pages (docs/index.html)
+GitHub Pages  /  (docs/index.html + docs/config.js)
+              /corp/  (같은 index.html + docs/corp/config.js, 키 입력·이용 안내 탭)
       │  fetch
       ▼
-Supabase Edge Function "naver-news" (supabase/functions/naver-news/index.ts)
-  - 네이버 API 키는 Supabase secrets 에 저장 (화면에 노출 안 됨)
-  - action "search" : 네이버 뉴스 검색 + 기간 필터
-  - action "bodies" : 기사 링크에 접속해 본문/언론사 추출 (한 번에 최대 20건)
+Supabase Edge Functions
+  naver-news       (supabase/functions/naver-news/index.ts)       서버 키 사용
+  naver-news-corp  (supabase/functions/naver-news-corp/index.ts)  요청 본문의 사용자 키 사용
+  └ 공통 로직: supabase/functions/_shared/news.ts
+      - action "search" : 네이버 뉴스 검색(최신순 + 정확도순) + 기간 필터
+      - action "bodies" : 기사 링크에 접속해 본문/언론사 추출 (한 번에 최대 20건)
 ```
+
+> 배포용 함수는 사용자 키를 요청 헤더가 아니라 **본문**으로 받습니다(헤더는 플랫폼 로그에 남을 수 있음). 받은 키는 네이버 호출에만 쓰고 저장·기록하지 않습니다.
 
 > 네이버 API는 브라우저에서 직접 호출할 수 없어서(CORS 미지원, Secret 노출 문제) Edge Function이 대신 호출합니다.
 > 본문 수집은 함수 실행 시간 제한 때문에 화면에서 20건씩 나눠 요청하고, CSV / Excel 파일은 브라우저에서 바로 만듭니다.
@@ -74,20 +66,15 @@ npx supabase link --project-ref <project-ref>
 # 네이버 API 키 등록 (서버에만 저장됨)
 # secrets 는 프로젝트 전체가 공유하므로 다른 함수와 겹치지 않도록 NEWS_COLLECTOR_ 접두사를 씁니다.
 npx supabase secrets set NEWS_COLLECTOR_NAVER_CLIENT_ID=발급받은ID NEWS_COLLECTOR_NAVER_CLIENT_SECRET=발급받은Secret
-# 개발자센터(developers.naver.com) 키라면 이것도 추가 (NAVER API HUB 키면 생략)
-# npx supabase secrets set NEWS_COLLECTOR_NAVER_API_PROVIDER=developers
 
-# 배포 (로그인 없이 호출할 수 있도록 JWT 검사 해제)
+# 배포 (로그인 없이 호출할 수 있도록 JWT 검사 해제). 두 함수 모두 배포합니다.
 npx supabase functions deploy naver-news --no-verify-jwt
+npx supabase functions deploy naver-news-corp --no-verify-jwt
 ```
 
-### 방법 B. 대시보드에서 직접
+`supabase/functions/_shared/news.ts` 를 고치면 **두 함수 모두** 다시 배포해야 합니다.
 
-1. 대시보드 → **Edge Functions** → **Deploy a new function** → **Via Editor**
-2. 함수 이름 `naver-news`, 코드 칸에 `supabase/functions/naver-news/index.ts` 내용을 전부 붙여넣고 Deploy
-3. 함수 상세 화면 → **Details** 에서 **JWT 검사(Verify JWT)** 를 **끄고** 저장
-4. **Edge Functions → Secrets** 에서 `NEWS_COLLECTOR_NAVER_CLIENT_ID`, `NEWS_COLLECTOR_NAVER_CLIENT_SECRET` 추가
-   (개발자센터 키라면 `NEWS_COLLECTOR_NAVER_API_PROVIDER` = `developers` 도 추가)
+> 두 함수가 공통 파일(`_shared/news.ts`)을 함께 쓰므로, 대시보드 편집기에 코드를 붙여넣는 방식은 쓸 수 없습니다. CLI 로 배포하세요.
 
 ### 배포 확인
 
@@ -102,8 +89,8 @@ curl -X POST https://<project-ref>.supabase.co/functions/v1/naver-news \
 | 에러 | 해결 |
 |---|---|
 | `NEWS_COLLECTOR_NAVER_CLIENT_ID / NEWS_COLLECTOR_NAVER_CLIENT_SECRET 이 설정되지 않았습니다` | secrets 등록 후 다시 시도 |
-| `네이버 인증 실패` (401) | Client ID / Secret 오타 확인. 키 발급처(API HUB / 개발자센터)와 `NEWS_COLLECTOR_NAVER_API_PROVIDER` 설정이 맞는지 확인 |
-| `네이버 API 권한 없음` (403) | API HUB: Application 에 "뉴스" API 선택 / 개발자센터: 애플리케이션에 "검색" API 추가 |
+| `네이버 인증 실패` (401) | NAVER API HUB 의 Client ID / Secret 오타 확인 |
+| `네이버 API 권한 없음` (403) | NAVER API HUB → Application 에 "뉴스" API 선택·저장, Subscription 확인 |
 | `Invalid JWT` / `Missing authorization header` | JWT 검사 해제(`--no-verify-jwt`) 후 재배포 |
 
 ## 3. GitHub Pages 설정
@@ -115,7 +102,16 @@ curl -X POST https://<project-ref>.supabase.co/functions/v1/naver-news \
 2. GitHub 레포 → **Settings → Pages** → Source: **GitHub Actions** 선택
    - `main` 에 `docs/` 변경이 푸시될 때마다 `.github/workflows/pages.yml` 이 자동 배포합니다.
    - 수동 배포: **Actions → Deploy GitHub Pages → Run workflow**
-3. 1~2분 뒤 `https://<GitHub 아이디>.github.io/NAVER_News_collector/` 접속
+3. 1~2분 뒤 접속
+   - 본인용: `https://<GitHub 아이디>.github.io/NAVER_News_collector/`
+   - 배포용: `https://<GitHub 아이디>.github.io/NAVER_News_collector/corp/`
+
+### 배포용 사이트 (`/corp/`)
+
+- 설정은 `docs/corp/config.js` 하나입니다 (`naver-news-corp` 함수 주소 + 배포용 모드). 화면 코드(`docs/index.html`, `docs/ai-export.js`)는 배포할 때 이 폴더로 복사되어 쓰이므로 따로 고칠 필요가 없습니다.
+  - 그래서 `docs/corp/` 폴더를 로컬에서 바로 열면 동작하지 않습니다. 배포된 주소로 확인하세요.
+- **이용 안내** 탭의 캡처는 `docs/corp/guide/` 에 정해진 이름의 PNG 를 넣으면 자동으로 표시됩니다. 파일 목록은 [`docs/corp/guide/README.md`](docs/corp/guide/README.md) 참고. 없는 캡처는 "캡처 준비 중" 자리로 표시됩니다.
+- 사용자 키는 사용자 브라우저에만 저장되며("이 브라우저에 저장"을 끄면 저장하지 않음), 사용자마다 네이버 호출 한도가 따로 적용됩니다.
 
 ## 4. (선택) 다른 사이트에서의 호출 막기
 
@@ -147,24 +143,11 @@ npx supabase secrets set NEWS_COLLECTOR_ALLOWED_ORIGINS=https://<GitHub 아이�
 
 ---
 
-# 로컬 버전 (Python)
-
-## 설치 & 실행
-
-```bash
-cd NAVER_News_collector
-python3 -m pip install -r requirements.txt
-python3 app.py
-```
-
-브라우저에서 **http://localhost:5000** 접속.
-
-- 처음 화면 상단 `🔑 API 인증 정보`에 Client ID / Secret 입력 (브라우저에 저장되어 다음부턴 생략)
-- 또는 `.env.example`을 `.env`로 복사해 키를 넣어두면 자동 입력됨
+# 사용 안내
 
 ## 사용법
 
-1. 검색 키워드 입력 — 회사를 부르는 이름이 여러 개면 쉼표로 구분 (예: `포스코인터내셔널, 포스코인터`). 이름마다 따로 검색해 중복을 합친 하나의 결과로 보여줍니다(웹 버전).
+1. 검색 키워드 입력 — 회사를 부르는 이름이 여러 개면 쉼표로 구분 (예: `포스코인터내셔널, 포스코인터`). 이름마다 따로 검색해 중복을 합친 하나의 결과로 보여줍니다.
 2. 시작일 / 종료일 선택
 3. **기사 본문 전체 수집** 체크 여부 결정
    - ✅ 체크: 각 기사 링크에 접속해 본문 전체를 "주요 내용"에 채움 (느림)
@@ -180,9 +163,8 @@ python3 app.py
 
 - **기간 필터**: 네이버 검색 API에는 날짜 파라미터가 없어, 받아온 기사 중 지정 기간 안의 것만 남기는 방식입니다.
 - **최대 1,000건**: API는 한 검색어·정렬당 1,000건까지만 조회 가능합니다. 기사가 많은 회사는 최신순 1,000건이 최근 한 달 안팎에서 끝납니다.
-  - **웹 버전**은 최신순과 **정확도순**을 함께 가져와 합칩니다. 정확도순은 날짜와 무관하게 관련도 높은 기사를 주므로 더 오래된 기간도 일부 채워지지만, 그 기간은 관련도 높은 기사 위주라 빠진 기사가 있을 수 있습니다(경고로 표시).
+  - 그래서 최신순과 **정확도순**을 함께 가져와 합칩니다. 정확도순은 날짜와 무관하게 관련도 높은 기사를 주므로 더 오래된 기간도 일부 채워지지만, 그 기간은 관련도 높은 기사 위주라 빠진 기사가 있을 수 있습니다(경고로 표시).
   - 합친 결과가 "최대 수집 건수"보다 많으면 기간 전체에서 고르게 추립니다.
-  - **로컬 버전(Python)** 은 최신순만 사용합니다.
 - **본문/출처 추출**: 네이버 뉴스(`n.news.naver.com`) 링크는 잘 추출됩니다. 외부 언론사 페이지는 구조가 제각각이라 일부 기사는 본문이 비거나 요약만 채워질 수 있습니다(best-effort).
 
 - 
