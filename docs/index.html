@@ -4,13 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>네이버 뉴스 검색 정리 툴</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#03c75a">
 <style>
   :root { --brand:#03c75a; --bg:#f5f6f8; --line:#e3e5e8; --muted:#6b7280; }
   * { box-sizing: border-box; }
   [hidden] { display:none !important; }
   body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Malgun Gothic","맑은 고딕",sans-serif;
          background:var(--bg); color:#1f2328; }
-  header { background:var(--brand); color:#fff; padding:18px 24px; font-size:20px; font-weight:700; }
+  header { background:var(--brand); color:#fff; padding:18px 24px; font-size:20px; font-weight:700;
+           display:flex; align-items:center; gap:10px; }
+  header .logo { width:30px; height:30px; border-radius:7px; box-shadow:0 0 0 2px rgba(255,255,255,.55); }
   .wrap { max-width:1100px; margin:0 auto; padding:24px; }
   .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:20px; }
   label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:#374151; }
@@ -90,7 +95,7 @@
 </style>
 </head>
 <body>
-<header>📰 네이버 뉴스 검색 정리 툴</header>
+<header><img src="favicon.svg" alt="" class="logo">네이버 뉴스 검색 정리 툴</header>
 <nav class="tabs" id="tabs" hidden>
   <button type="button" data-tab="search" class="active">검색</button>
   <button type="button" data-tab="guide">이용 안내</button>

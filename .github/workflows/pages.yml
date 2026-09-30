@@ -35,7 +35,7 @@ jobs:
       - name: Build site
         run: |
           cp -r docs _site
-          cp docs/index.html docs/ai-export.js _site/corp/
+          cp docs/index.html docs/ai-export.js docs/favicon.svg docs/apple-touch-icon.png _site/corp/
           # 브라우저가 이전 버전 js 를 캐시해 두지 않도록 배포마다 버전을 붙인다.
           sed -i "s/__BUILD__/${GITHUB_SHA::7}/g" _site/index.html _site/corp/index.html
       - uses: actions/upload-pages-artifact@v3
